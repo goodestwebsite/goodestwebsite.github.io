@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>WYK Path Finder</title>
+        <link rel="icon" href="photo.png">
+        <script src="find.js"></script>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body onload="load()">
+        <h1>WYK Path Finder</h1>
+        <hr>
+        Starting position : <select id="start" class="select"></select> <br><br>
+        Destination : <select id="destination" class="select"></select><br><br>
+        <button onclick="findpath()">Find Path</button> <br> <br>
+        <div>
+            <p id="route"></p>
+        </div>
+    </body>
+</html>

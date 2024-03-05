@@ -1,0 +1,25 @@
+body{
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    background-color: lightgrey;
+}
+select{
+    height:100% ;
+    width:20% ;
+    border-radius: 0.25rem;
+    color: rgb(0, 87, 4);
+    background-color: rgb(190, 190, 190);
+    cursor: pointer;
+}
+button{
+    background-color: grey;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+button:hover{
+    background-color: lightgrey;
+}
+div{
+    border:2px solid black ;
+    border-radius: 0.25rem;
+    background-color: white;
+}
