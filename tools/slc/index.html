@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>String Length calculator</title>
+        <link rel="stylesheet" href="/style.css">
+        <script src="/cookie.js"></script>
+    </head>
+    <body onload="getusername()">
+        <div class="menu" > <a href="/" class="home"><img src="/resources/logo.png" height="30px"> </a> <a href="/images">Images</a> <a href="/song">Songs</a> <a href="/tools">Tools</a> <a  id="username" class="usernam" ></a> <a href="/signin" class="signin">Sign In</a> </div>
+        <h1>String Length Calculator</h1>
+
+        <hr>
+        <script>
+            function cal(){
+                var st = document.getElementById("strin").value ;
+                var len = st.length ;
+                document.getElementById("ans").innerHTML = "String Length = " + len.toString() ;
+            }
+        </script>
+        &nbsp input string here : <input id="strin"> <button onclick="cal()">Calculate</button> <br>
+        &nbsp <p id="ans"></p>
+    </body>
+</html>

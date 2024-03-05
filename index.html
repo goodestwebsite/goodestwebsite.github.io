@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+    <head>
+        <title>goodest website</title>
+        <link rel="stylesheet" href="/style.css">
+    </head>
+    <body onload="getusername();checklog();mov();cool();">
+        <div class="menu" > <a href="/" class="home"><img src="/resources/logo.png" height="30px"> </a> <a href="/images">Images</a> <a href="/song">Songs</a> <a href="/tools">Tools</a> <a  id="username" class="usernam" ></a> <a href="/signin" class="signin">Sign In</a> </div>
+        <FONT COLOR="BLACK">
+        <center>
+        <h1>WELCOME TO GOODEST WEBSITE!!!</h1>
+        <br><hr><br><br>
+        <FONT COLOR="BLACK">
+        </center>
+        <script src="/cookie.js"></script>
+        <div class="flex-container">
+            <div class="non-flex-container">
+        <script>
+            function getusername(){
+                if (getCookie("username") == "") document.getElementById("text").innerHTML = "You haven't signed in" ;
+                else document.getElementById("text").innerHTML = "Welcome! " + getCookie("username") ;
+                return ;
+            }
+        </script>
+        <script>
+            var i=0 ;
+            var s="Welcome!" ;
+            function mov(){
+                document.getElementById("anim").innerHTML = "W" ;
+                for (var j = 1 ; j < i ; j ++) document.getElementById("anim").innerHTML += s.charAt(j) ;
+                i ++ ;
+                if (i != 9) setTimeout(mov, 100) ;
+                else {
+                    i=0 ;
+                    setTimeout(mov, 5000) ;
+                }
+            }
+            var j=58*2, k=0 ;
+            var st="......................................................<br>......................................................<br>......................................................<br>......................................................<br>" ;
+            function cool(){
+                document.getElementById("col").innerHTML = st ;
+                var x=st.charAt(j) ;
+                if (st.charAt(j) == '.') x = 'X' ;
+                else if (st.charAt(j) == 'X') x = '-' ;
+                else if (st.charAt(j) == '-') x = 'X' ;
+                st = st.substring(0, j) + x + st.substring(j+1) ;
+                j ++ ;
+                j %= st.length ;
+                setTimeout(cool2, 1) ;
+            }
+            function cool2(){
+                document.getElementById("col").innerHTML = st ;
+                var x=st.charAt(k) ;
+                if (st.charAt(k) == '.') x = 'X' ;
+                else if (st.charAt(k) == 'X') x = '-' ;
+                else if (st.charAt(k) == '-') x = 'X' ;
+                st = st.substring(0, k) + x + st.substring(k+1) ;
+                k ++ ;
+                k %= st.length ;
+                setTimeout(cool, 1) ;
+            }
+        </script>
+        <h2 id="anim"></h2>
+        <p id="text"></p>
+        <!-- <p id="col"></p> -->
+        <br>
+        <br>
+        <br>
+        </div>
+        <div class="pos-right">
+            <div class="box">
+                <h2>Useful Tools</h2> <hr><br>
+                - <a href="/tools/calculator/" >Cauculator</a> <br>
+                - <a href="/tools/collatz/" >3n+1 Problem Calculator</a><br>
+                - <a href="/tools/fibonacci/" >Fibonacci Sequence Calculator</a><br>
+                - <a href="/tools/slc/" >String Length Calculator</a><br>
+                - <a href="/bruh/rickroll/" >free money claimer</a><br>
+
+                <br><br><br>
+            </div>
+        </div>
+        </div>
+        <a href="https://www.google.com/search?q=never+gonna+give+you+up&oq=never+gonn&gs_lcrp=EgZjaHJvbWUqDAgAEAAYQxjjAhiKBTIMCAAQABhDGOMCGIoFMgkIARAuGEMYigUyBggCEEUYOTIJCAMQABhDGIoFMgkIBBAAGEMYigUyCQgFEAAYQxiKBTIJCAYQABhDGIoFMgkIBxAAGEMYigUyBwgIEC4YgAQyBwgJEAAYgASoAgCwAgA&sourceid=chrome&ie=UTF-8">
+            <button style = "width: 100px ;   height:100px ; background-color:  gold; color: rgb(0, 0, 107);">click to claim free money</button>
+        </a>
+        <FONT COLOR = "GREY">
+        <p style="font-size:small">built on 28/10/2023</p>
+        <p style="font-size:small">by ethan</p>
+        <script src="/cookie.js"></script>
+        <script>
+            function logout(){
+                deletecookie() ;
+                checklog();
+                location.replace("/") ;
+            }
+            function checklog(){
+                if (getCookie("username") == ""){
+                    document.getElementById("islogin").innerHTML = "" ;
+                    document.getElementById("text").innerHTML = "You haven't signed in" ;
+                }
+                else document.getElementById("islogin").innerHTML = "Log out" ;
+
+            }
+            </script>
+        <button onclick="logout()"><p id="islogin"></p></button>
+    </body>
+</html>
