@@ -9,9 +9,10 @@
                 if (getusername() == "") location.replace("/nopermission.html");
             }
         </script>
+        <script src="/getlink.js"></script>
     </head>
-    <body onload="getusername();test()">
-        <div class="menu" > <a href="/" class="home"><img src="/resources/logo.png" height="30px"> </a> <a href="/images">Images</a> <a href="/song">Songs</a> <a href="/tools">Tools</a> <a  id="username" class="usernam" ></a> <a href="/signin" class="signin">Sign In</a> </div>
+    <body onload="getusername(), getlink()">
+        <div class="menu" > <a href="/" class="home"><img src="/resources/logo.png" height="30px"> </a> <a id="link1"></a> <a id="link2"></a> <a id="link3"></a> <a  id="username" class="usernam" ></a> <a href="/signin" class="signin">Sign In</a> </div>
         <h1>Images</h1>
         <hr>
         <a href="https://drive.google.com/drive/folders/10k8wqdW3zjSAdyeGVB9S43Ia1A7d6PGH?usp=sharing">Google Drive of the images</a>

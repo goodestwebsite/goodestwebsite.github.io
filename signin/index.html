@@ -5,9 +5,10 @@
         <link rel="stylesheet" href="/style.css">
         <script src="script.js"></script>
         <script src="/cookie.js"></script>
+        <script src="/getlink.js"></script>
     </head>
-    <body onload="checkson(), getusername()">
-        <div class="menu" > <a href="/" class="home"><img src="/resources/logo.png" height="30px"> </a> <a href="/images">Images</a> <a href="/song">Songs</a> <a href="/tools">Tools</a> <a  id="username" class="usernam" ></a> <a href="/signin" class="signin">Sign In</a> </div>
+    <body onload="getusername(), getlink()">
+        <div class="menu" > <a href="/" class="home"><img src="/resources/logo.png" height="30px"> </a> <a id="link1"></a> <a id="link2"></a> <a id="link3"></a> <a  id="username" class="usernam" ></a> <a href="/signin" class="signin">Sign In</a> </div>
         <h1>Sign in</h1>
         <hr>
         Username : <input id="usernameinput"> <br>

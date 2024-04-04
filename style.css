@@ -92,7 +92,7 @@ background-color: darkslategray;
 .menu a:hover{
     background-color : darkgrey ;
     transition : background 0.2s ;
-    border-radius: 20%;
+    border-radius: 10px;
     transition : border-radius 0.2s ;
 }
 .button{
