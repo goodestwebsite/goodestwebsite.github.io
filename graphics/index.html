@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>graphics</title>
+        <link rel="stylesheet" href="/style.css">
+        <script src="/cookie.js"></script>
+        <script src="/getlink.js"></script>
+        <style>
+            .canvas {
+                border: 1px solid;
+                background-color: white;
+            }
+        </style>
+        <script>
+            let arr=[] ;
+            let xxx=1 ;
+            function start(){
+                var c = document.getElementById("cc");
+                var pen = c.getContext("2d");
+                for (var i = 0 ; i < 500 ; i += 10){
+                    arr[i]=[] ;
+                    for (var j = 0 ; j < 500 ; j += 10){
+                        arr[i][j]=0 ;
+                        // if (getTime()%60 == i/10){
+                        //     arr[i][j]=0 ;
+                        // }
+                        // else {
+                        //     arr[i][j] = 1 ;
+                        // }
+                    }
+                }
+                updategraphic(1) ;
+            }
+            function updategraphic(x){
+                var c = document.getElementById("cc");
+                var pen = c.getContext("2d");
+                pen.clearRect(0, 0, c.width, c.height);
+                for (var i = 0 ; i < 500 ; i += 10){
+                    for (var j = 0 ; j < 500 ; j += 10){
+                        if (arr[i][j] == 0){
+                            pen.moveTo(i,j) ;
+                            pen.lineTo(i+1, j) ;
+                            pen.stroke() ;
+                        }
+                    }
+                }
+                xxx += 1 ;
+                document.getElementById("pppp").innerHTML = xxx ;
+                setTimeout(updategraphic, 3000) ;
+            }
+        </script>
+    </head>
+    <body onload="getusername(), getlink(), start()">
+        <div class="menu" > <a href="/" class="home"><img src="/resources/logo.png" height="30px"> </a> <a id="link1"></a> <a id="link2"></a> <a id="link3"></a> <a  id="username" class="usernam" ></a> <a href="/signin" class="signin">Sign In</a> </div>
+        <h1>Graphic Test</h1>
+        <hr>
+        <canvas width="500px" height="500px" class="canvas" id="cc"></canvas>
+        <p id="pppp">aaa</p>
+    </body>
+</html>

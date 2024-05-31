@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Image Converter</title>
+        <link rel="stylesheet" href="/style.css">
+        <script src="/cookie.js"></script>
+        <script src="/getlink.js"></script>
+    </head>
+    <body onload="getusername(), getlink()">
+        <div class="menu" > <a href="/" class="home"><img src="/resources/logo.png" height="30px"> </a> <a id="link1"></a> <a id="link2"></a> <a id="link3"></a> <a  id="username" class="usernam" ></a> <a href="/signin" class="signin">Sign In</a> </div>
+        <h1>Image Converter</h1>
+        <hr>
+        <script>
+            var loadFile = function(event) {
+                var image = document.getElementById("output");
+                var w = image.width, h = image.height;
+                var canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0);
+                var data = ctx.getImageData(0, 0, w, h);
+                document.getElementById("xxx").innerHTML = "data" ;
+            };
+            function grey(){
+                var image = document.getElementById('output');
+
+            }
+            </script>
+        <input type="file" id="file" onchange="loadFile(event)" accept="image/*">
+        <br>
+        <button type="submit" onclick="grey()">Upload</button>
+        <img id="output", width="200px">
+        <p id="xxx"></p>
+    </body>
+</html>

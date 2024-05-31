@@ -21,7 +21,17 @@ body{
     right: 5%;
     height: 250px;
 }
-.box {
+.box-l {
+    width : 300px ;
+    height : auto ;
+    position: absolute;
+    left:0%;
+    border : 2px solid black ;
+    border-radius: 5%;
+    padding: 10px;
+    background-color: white;
+}
+.box-r {
     width : 300px ;
     height : auto ;
     position: absolute;
@@ -102,4 +112,12 @@ background-color: darkslategray;
 .button:hover{
     background-color: green;
     color: black ;
+}
+.button-blue{
+    background-color: rgb(152, 214, 255);
+    color: black ;
+    border-radius: 10%;
+}
+.button-blue:hover{
+    background-color: rgb(145, 224, 255);
 }

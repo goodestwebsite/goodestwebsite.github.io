@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Weather</title>
+        <link rel="stylesheet" href="/style.css">
+        <script src="/cookie.js"></script>
+        <script src="/getlink.js"></script>
+    </head>
+    <body onload="getusername(), getlink(), getvalue('AAPL')">
+        <div class="menu" > <a href="/" class="home"><img src="/resources/logo.png" height="30px"> </a> <a id="link1"></a> <a id="link2"></a> <a id="link3"></a> <a  id="username" class="usernam" ></a> <a href="/signin" class="signin">Sign In</a> </div>
+        <h1>Weather</h1>
+        <hr>
+        <script>
+            // Define the API URL
+            function getvalue(s){
+                // Specify the API endpoint for user data
+                const apiUrl = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php';
+
+                // Make a GET request using the Fetch API
+                fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(userData => {
+                    // Process the retrieved user data
+                    document.getElementById("text").innerHTML = userdata ;
+                })
+                .catch(error => {
+                    document.getElementById("text").innerHTML = "userdata" ;
+                });
+            }
+        </script>
+        <p id="text"></p>
+    </body>
+</html>
