@@ -158,6 +158,14 @@
     .grid-row.revealed .grid-cell { background-color: #fffbeb !important; border-color: #fbbf24 !important; }
     .grid-row.active-row .grid-cell { background-color: #f0f7ff !important; border-color: #93c5fd !important; }
     .grid-cell.current-inspect { outline: 3px solid #e11d48 !important; outline-offset: -3px; background-color: #fff1f2 !important; border-color: #e11d48 !important; }
+    .task-score-grid.task-pulse,
+    .task-score-grid.task-pulse-zero {
+      outline: 3px solid #e11d48;
+      outline-offset: 2px;
+      border-radius: 4px;
+      padding: 0 4px;
+      background-color: #fff1f2;
+    }
     .grid-cell.current-inspect-rank { outline: 3px solid #e11d48 !important; outline-offset: -3px; background-color: #fff1f2 !important; border-color: #e11d48 !important; }
     .grid-cell.rank-up { background-color: #f0fdf4 !important; border-color: #16a34a !important; color: #166534 !important; font-weight: 800 !important; }
 
@@ -283,6 +291,11 @@
         <label for="topXInput">🏆 Top X</label>
         <input type="number" id="topXInput" min="1" max="50" value="5">
       </div>
+	<div class="speed-control">
+  <label for="rankPauseSlider">Rank Pause</label>
+  <input type="range" id="rankPauseSlider" min="0" max="2000" value="50" step="50">
+  <span class="speed-value" id="rankPauseValue">50ms</span>
+</div>
       <span class="status" id="statusMsg">Ready</span>
     </div>
   </div>
@@ -376,11 +389,17 @@
     const ZERO_SCORE_FACTOR = 0.25;
     const LOCK_EXTRA_PAUSE = 800;
     const LOCK_LOCKOUT_MS = 800;
-    const RANK_UP_AUTO_PAUSE_MS = 50;
+    // const RANK_UP_AUTO_PAUSE_MS = 200;
 
     function getRevealDelay() { return parseInt(speedSlider.value, 10) || 900; }
     function getTopX() { const v = parseInt(topXInput.value, 10); return (isNaN(v) || v < 1) ? 5 : v; }
     function updateSpeedDisplay() { const v = getRevealDelay(); speedValue.textContent = (v / 1000).toFixed(2).replace(/0$/, '') + 's'; }
+	const rankPauseSlider = document.getElementById('rankPauseSlider');
+const rankPauseValue = document.getElementById('rankPauseValue');
+function getRankPauseMs() { return parseInt(rankPauseSlider.value, 10) || 0; }
+function updateRankPauseDisplay() { rankPauseValue.textContent = getRankPauseMs() + 'ms'; }
+rankPauseSlider.addEventListener('input', updateRankPauseDisplay);
+updateRankPauseDisplay();
     speedSlider.addEventListener('input', updateSpeedDisplay);
     updateSpeedDisplay();
 
@@ -726,7 +745,7 @@
       rpcNameText.textContent = displayName;
       rankPauseSection.style.display = 'block';
       rpcProgressBar.style.animation = 'none'; void rpcProgressBar.offsetWidth;
-      rpcProgressBar.style.animation = `rpc-fill ${RANK_UP_AUTO_PAUSE_MS}ms linear forwards`;
+      rpcProgressBar.style.animation = `rpc-fill ${getRankPauseMs()}ms linear forwards`;
       requestAnimationFrame(() => rankPauseCard.classList.add('show'));
     }
     function hideRankPauseInPanel() {
@@ -893,20 +912,22 @@
         }
 
         if (rankIncreased) {
-          stepCount++;
-          isPaused = true;
-          statusMsg.textContent = '⏸ Paused — rank increased';
-          showRankPauseInPanel(oldRank, newRank, contestant.displayName);
-          if (rankPauseTimer) clearTimeout(rankPauseTimer);
-          rankPauseTimer = setTimeout(function() {
-            hideRankPauseInPanel();
-            isPaused = false;
-            statusMsg.textContent = '⏳ Sweeping...';
-            const pauseExtra = newlyLocked.length > 0 ? Math.max(getRevealDelay(), LOCK_EXTRA_PAUSE) : getRevealDelay();
-            animationTimer = setTimeout(step, pauseExtra);
-          }, RANK_UP_AUTO_PAUSE_MS);
-          return;
-        }
+  stepCount++;
+  isPaused = true;
+  statusMsg.textContent = '⏸ Paused — rank increased';
+  showRankPauseInPanel(oldRank, newRank, contestant.displayName);
+  if (rankPauseTimer) clearTimeout(rankPauseTimer);
+  const pauseMs = getRankPauseMs();
+  rankPauseTimer = setTimeout(function() {
+    rankPauseTimer = null;
+    hideRankPauseInPanel();
+    isPaused = false;
+    statusMsg.textContent = '⏳ Sweeping...';
+    const pauseExtra = newlyLocked.length > 0 ? Math.max(getRevealDelay(), LOCK_EXTRA_PAUSE) : getRevealDelay();
+    animationTimer = setTimeout(step, pauseExtra);
+  }, Math.max(10, pauseMs));
+  return;
+}
 
         stepCount++;
         animationTimer = setTimeout(step, delay);
