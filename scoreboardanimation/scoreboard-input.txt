@@ -1,0 +1,1108 @@
+<table class="table table-sm table-bordered table-hover text-nowrap">
+                <thead>
+                    <tr>
+                        <th class="text-center px-2" width="4%">Rank</th>
+                        <th class="px-2">Contestant</th>
+                        
+                            <th class="text-center px-2">
+                                W262A
+                                <span class="task-title">
+                                    <br>
+                                    eight-hundred
+                                </span>
+                            </th>
+                        
+                            <th class="text-center px-2">
+                                W262B
+                                <span class="task-title">
+                                    <br>
+                                    one-thousand-four-hundred
+                                </span>
+                            </th>
+                        
+                            <th class="text-center px-2">
+                                W262C
+                                <span class="task-title">
+                                    <br>
+                                    two-thousand-one-hundred
+                                </span>
+                            </th>
+                        
+                            <th class="text-center px-2">
+                                W262D
+                                <span class="task-title">
+                                    <br>
+                                    two-thousand-eight-hundred
+                                </span>
+                            </th>
+                        
+                            <th class="text-center px-2">
+                                W262E
+                                <span class="task-title">
+                                    <br>
+                                    three-thousand-five-hundred
+                                </span>
+                            </th>
+                        
+                        <th class="text-center px-2" width="4%">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    1
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/default_40.png" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s22f26/">s22f26 - Jonahgamer</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 0:09
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                        bg-accepted
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 2:50
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            75
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            85
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    360
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    2
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/default_40.png" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s25l09/">s25l09 - CHAN CHEUK WING</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 0:08
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            95
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            85
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            50
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    330
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    3
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/default_40.png" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s25f04/">s25f04 - Tam Shun Kan</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 0:08
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            95
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 1:44
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    295
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    4
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/default_40.png" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s24x26/">s24x26 - Wong Hanson</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                        bg-accepted
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 0:04
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            50
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            85
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            25
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    260
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    5
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/5b5cbdd2d7810b43_40.jpg" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s22r42/">s22r42 - Li Ching Shun</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 0:07
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            40
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            55
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    195
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    6
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/72987b07a04622a5_40.jpg" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s23f31/">s23f31 - Xie Linghao</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            0
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            90
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                        bg-accepted
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 1:00
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    190
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    7
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/default_40.png" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s23r16/">s23r16 - Lam Chun On</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            60
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            10
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            45
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    115
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    8
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/default_40.png" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s23f41/">s23f41 - Lee Tsun Yat</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 0:08
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            0
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    100
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    9
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/default_40.png" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s23l02/">s23l02 - Chan Chun Yin</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 0:15
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    100
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    10
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/default_40.png" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s26x06/">s26x06 - Du Jianping</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 0:15
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    100
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    11
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/d6ded035814bcb2b_40.png" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s22f22/">s22f22 - Liu Zi Qiao Jonathan</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                            accepted
+                                        
+                                        ">
+                                            100
+                                        </span>
+                                        
+                                            / 0:29
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    100
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    12
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/default_40.png" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s23l31/">s23l31 - Wong Tsun Yin</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            50
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    50
+                                </td>
+                            </tr>
+                    
+                        
+                            <tr>
+                                <td class="text-center px-2">
+                        
+                                    13
+                                </td>
+                                <td class="px-2">
+                                    
+    
+    <img src="/static/profile_pics/default_40.png" class="me-1" width="20px" height="20px">
+
+    <a href="/user/s23x35/">s23x35 - Wong Shun Long</a>
+
+                                </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                    <td class="text-center px-2
+                                    
+                                    ">
+                                        <span class="
+                                        
+                                        ">
+                                            
+                                        </span>
+                                        
+                                    </td>
+                                
+                                <td class="text-center px-2
+                                
+                                ">
+                                    0
+                                </td>
+                            </tr>
+                    
+                </tbody>
+            </table>

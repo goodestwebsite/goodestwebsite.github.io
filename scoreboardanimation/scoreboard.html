@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scoreboard Animation</title>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #ffffff; margin: 0; min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem; color: #0b1e2f; }
+    .container { max-width: 1500px; width: 100%; background: #ffffff; border-radius: 28px; box-shadow: 0 20px 40px rgba(0,20,30,0.06), 0 0 0 1px #eef2f7; padding: 2rem 2rem 2.5rem; }
+    h1 { font-size: 1.9rem; font-weight: 600; margin: 0 0 0.25rem 0; color: #0b1e2f; display: flex; align-items: center; gap: 10px; }
+    .subtitle { font-size: 0.95rem; color: #3f5a72; margin-bottom: 1.5rem; padding-left: 0.75rem; border-left: 5px solid #1d6b9e; line-height: 1.4; }
+    .input-section { background: #ffffff; border: 1px solid #e3ebf3; border-radius: 20px; padding: 1.2rem 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,20,30,0.03); }
+    .input-section label { font-weight: 600; font-size: 0.95rem; color: #0a2a44; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .name-input { width: 100%; padding: 0.75rem 1.2rem; border-radius: 14px; border: 1px solid #d8e2ec; background: #ffffff; font-size: 1rem; font-weight: 600; color: #0b2e4b; margin-bottom: 12px; transition: border 0.2s, box-shadow 0.2s; }
+    .name-input:focus { outline: none; border-color: #1d6b9e; box-shadow: 0 0 0 3px rgba(29,107,158,0.12); }
+    textarea { width: 100%; min-height: 130px; padding: 1rem 1.2rem; border-radius: 18px; border: 1px solid #d8e2ec; background: #ffffff; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.5; resize: vertical; transition: border 0.2s, box-shadow 0.2s; box-shadow: inset 0 1px 4px rgba(0,0,0,0.01); }
+    textarea:focus { outline: none; border-color: #1d6b9e; box-shadow: 0 0 0 3px rgba(29,107,158,0.12); }
+    .button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 15px; margin-top: 15px; }
+    button { background: #1d5b8c; border: none; color: white; font-weight: 600; padding: 0.75rem 1.8rem; border-radius: 60px; font-size: 1rem; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 6px 14px rgba(26,78,128,0.18); transition: background 0.15s, transform 0.1s; letter-spacing: 0.01em; }
+    button:hover { background: #144a73; }
+    button:active { transform: scale(0.97); }
+    button.secondary { background: #ffffff; color: #1d4c74; box-shadow: none; border: 1px solid #cfdce8; }
+    button.secondary:hover { background: #f4f8fc; }
+    .speed-control, .topx-control { display: flex; align-items: center; gap: 10px; background: #f6f9fc; padding: 6px 16px; border-radius: 50px; border: 1px solid #e6eef5; }
+    .speed-control label, .topx-control label { font-size: 0.85rem; font-weight: 600; color: #1e4a6e; white-space: nowrap; }
+    .speed-control input[type=range] { width: 140px; accent-color: #1d6b9e; cursor: pointer; }
+    .speed-value { font-size: 0.85rem; font-weight: 700; color: #0d3b60; min-width: 42px; text-align: right; }
+    .topx-control input[type=number] { width: 60px; padding: 4px 8px; border-radius: 8px; border: 1px solid #d8e2ec; font-weight: 700; color: #0d3b60; font-size: 0.9rem; text-align: center; background: #ffffff; }
+    .status { font-size: 0.9rem; background: #f6f9fc; padding: 6px 16px; border-radius: 50px; color: #1e4a6e; font-weight: 500; border: 1px solid #e6eef5; }
+
+    .main-layout { display: flex; gap: 20px; align-items: flex-start; }
+    .scoreboard-wrapper { flex: 1; min-width: 0; border-radius: 22px; overflow: hidden; border: 1px solid #e3ebf3; background: #ffffff; box-shadow: 0 4px 14px rgba(0,20,30,0.04); position: relative; display: flex; flex-direction: column; }
+    .contest-title-bar { padding: 14px 20px 12px; background: #ffffff; border-bottom: 2px solid #eef2f7; color: #0b1e2f; font-size: 1.25rem; font-weight: 800; letter-spacing: 0.02em; text-align: center; }
+    .contest-title-bar:empty { display: none; }
+    .side-panel { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
+    .side-panel .panel-section { background: #ffffff; border: 1px solid #e3ebf3; border-radius: 20px; padding: 16px 18px; min-height: 0; box-shadow: 0 2px 8px rgba(0,20,30,0.03); }
+    .side-panel .panel-title { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #6b8299; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .side-panel .panel-title .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; }
+    .side-panel .panel-title .dot.active { background: #16a34a; box-shadow: 0 0 8px rgba(22,163,74,0.7); animation: dot-pulse 1.2s ease-in-out infinite; }
+    @keyframes dot-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .side-panel .panel-empty { font-size: 0.85rem; color: #94a3b8; font-style: italic; padding: 6px 0; }
+
+    .rank-change-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #ffffff; border-radius: 14px; border: 2px solid #1d6b9e; opacity: 0; transform: translateY(6px); transition: opacity 0.3s ease, transform 0.3s ease; margin-bottom: 8px; }
+    .rank-change-card.show { opacity: 1; transform: translateY(0); }
+    .rank-change-card .rc-block { display: flex; flex-direction: column; align-items: center; min-width: 48px; }
+    .rank-change-card .rc-label { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #94a3b8; margin-bottom: 2px; }
+    .rank-change-card .rc-number { font-size: 1.6rem; font-weight: 800; line-height: 1; font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+    .rank-change-card .rc-number.old { color: #94a3b8; text-decoration: line-through; text-decoration-color: #cbd5e1; }
+    .rank-change-card .rc-number.new { color: #16a34a; }
+    .rank-change-card .rc-arrow { font-size: 1.4rem; color: #1d6b9e; font-weight: 800; animation: arrow-bounce 0.6s ease-in-out infinite alternate; }
+    @keyframes arrow-bounce { from { transform: translateX(-3px); } to { transform: translateX(3px); } }
+    .rank-change-card .rc-name { flex: 1; font-size: 0.85rem; font-weight: 600; color: #0b2b41; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .lock-notify { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: #ffffff; border: 1px solid #bbf7d0; margin-bottom: 8px; opacity: 0; transform: translateX(10px); transition: opacity 0.3s ease, transform 0.3s ease; }
+    .lock-notify.show { opacity: 1; transform: translateX(0); }
+    .lock-notify .ln-icon { font-size: 1.3rem; filter: drop-shadow(0 2px 3px rgba(22,163,74,0.4)); }
+    .lock-notify .ln-body { flex: 1; min-width: 0; }
+    .lock-notify .ln-name { font-size: 0.85rem; font-weight: 600; color: #0b2b41; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lock-notify .ln-rank { font-size: 0.75rem; color: #16a34a; font-weight: 700; font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+
+    .fixed-panel-card { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 16px; background: #ffffff; border: 3px solid #16a34a; border-radius: 18px; opacity: 0; transform: scale(0.85); transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1); text-align: center; }
+    .fixed-panel-card.show { opacity: 1; transform: scale(1); }
+    .fixed-panel-card .fpc-word { font-size: 2.6rem; font-weight: 900; letter-spacing: 0.05em; color: #16a34a; line-height: 1; text-transform: uppercase; text-shadow: 0 3px 10px rgba(22,163,74,0.2); }
+    .fixed-panel-card .fpc-rank { font-size: 1.2rem; font-weight: 800; color: #0b2b41; font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+    .fixed-panel-card .fpc-name { font-size: 0.95rem; font-weight: 600; color: #3f5a72; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fixed-panel-card .fpc-queue { font-size: 0.75rem; color: #16a34a; font-weight: 700; background: #ffffff; border: 1px solid #bbf7d0; padding: 2px 10px; border-radius: 20px; }
+    .fixed-panel-card .fpc-btn { margin-top: 6px; background: #16a34a; color: white; border: none; font-weight: 800; font-size: 1rem; padding: 0.7rem 2rem; border-radius: 60px; cursor: pointer; letter-spacing: 0.04em; box-shadow: 0 6px 16px rgba(22,163,74,0.25); transition: background 0.15s, transform 0.1s; }
+    .fixed-panel-card .fpc-btn:hover { background: #15803d; }
+    .fixed-panel-card .fpc-btn:active { transform: scale(0.97); }
+
+    .topx-panel-card { display: flex; flex-direction: column; gap: 8px; opacity: 0; transform: translateY(8px); transition: opacity 0.35s ease, transform 0.35s ease; }
+    .topx-panel-card.show { opacity: 1; transform: translateY(0); }
+    .topx-panel-card .tpc-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: #ffffff; border: 1px solid #eef2f7; }
+    .topx-panel-card .tpc-row:nth-child(1) { background: #ffffff; border-color: #fbbf24; }
+    .topx-panel-card .tpc-row:nth-child(2) { background: #ffffff; border-color: #cbd5e1; }
+    .topx-panel-card .tpc-row:nth-child(3) { background: #ffffff; border-color: #fdba74; }
+    .topx-panel-card .tpc-medal { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+    .topx-panel-card .tpc-rank { font-size: 0.85rem; font-weight: 800; color: #0b2b41; font-family: 'JetBrains Mono', 'SF Mono', monospace; min-width: 26px; }
+    .topx-panel-card .tpc-name { flex: 1; font-size: 0.8rem; font-weight: 600; color: #0b2b41; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .topx-panel-card .tpc-score { font-size: 0.9rem; font-weight: 800; color: #1d6b9e; font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+
+    /* ========== CENTERED TOP-5 PODIUM POPUP ========== */
+    .podium-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 1000; opacity: 0; transition: opacity 0.4s ease; padding: 20px; }
+    .podium-overlay.show { display: flex; opacity: 1; }
+    .podium-modal { background: #ffffff; border-radius: 28px; box-shadow: 0 30px 80px rgba(0,20,30,0.18), 0 0 0 1px #eef2f7; padding: 32px 36px 28px; max-width: 760px; width: 100%; max-height: 90vh; overflow-y: auto; transform: scale(0.85) translateY(20px); transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1); position: relative; }
+    .podium-overlay.show .podium-modal { transform: scale(1) translateY(0); }
+    .podium-modal .pm-close { position: absolute; top: 14px; right: 16px; background: #ffffff; border: 1px solid #e3ebf3; color: #1d4c74; font-size: 1.3rem; font-weight: 800; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s, transform 0.1s; line-height: 1; }
+    .podium-modal .pm-close:hover { background: #f4f8fc; }
+    .podium-modal .pm-close:active { transform: scale(0.92); }
+    .podium-modal .pm-title { text-align: center; font-size: 1.6rem; font-weight: 900; color: #0b1e2f; margin-bottom: 6px; letter-spacing: 0.01em; }
+    .podium-modal .pm-subtitle { text-align: center; font-size: 0.95rem; color: #3f5a72; font-weight: 600; margin-bottom: 22px; }
+    .podium-modal .pm-list { display: flex; flex-direction: column; gap: 10px; }
+    .podium-modal .pm-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 16px; background: #ffffff; border: 2px solid #eef2f7; opacity: 0; transform: translateY(12px); animation: pm-row-in 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .podium-modal .pm-row.rank-1 { background: #ffffff; border-color: #fbbf24; box-shadow: 0 4px 14px rgba(251,191,36,0.15); }
+    .podium-modal .pm-row.rank-2 { background: #ffffff; border-color: #94a3b8; box-shadow: 0 4px 14px rgba(148,163,184,0.12); }
+    .podium-modal .pm-row.rank-3 { background: #ffffff; border-color: #fdba74; box-shadow: 0 4px 14px rgba(253,186,116,0.15); }
+    .podium-modal .pm-row.rank-4, .podium-modal .pm-row.rank-5 { background: #ffffff; border-color: #eef2f7; }
+    @keyframes pm-row-in { to { opacity: 1; transform: translateY(0); } }
+    .podium-modal .pm-medal { font-size: 1.6rem; width: 36px; text-align: center; flex-shrink: 0; }
+    .podium-modal .pm-rank-num { font-size: 1rem; font-weight: 800; color: #64748b; font-family: 'JetBrains Mono', 'SF Mono', monospace; min-width: 32px; }
+    .podium-modal .pm-row.rank-1 .pm-rank-num { color: #b45309; }
+    .podium-modal .pm-row.rank-2 .pm-rank-num { color: #475569; }
+    .podium-modal .pm-row.rank-3 .pm-rank-num { color: #c2410c; }
+    .podium-modal .pm-name { flex: 1; font-size: 1rem; font-weight: 700; color: #0b2b41; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .podium-modal .pm-score { font-size: 1.15rem; font-weight: 900; color: #1d6b9e; font-family: 'JetBrains Mono', 'SF Mono', monospace; background: #f0f6fe; padding: 4px 14px; border-radius: 40px; min-width: 60px; text-align: center; }
+    .podium-modal .pm-row.rank-1 .pm-score { background: #fef3c7; color: #92400e; }
+    .podium-modal .pm-row.rank-2 .pm-score { background: #f1f5f9; color: #334155; }
+    .podium-modal .pm-row.rank-3 .pm-score { background: #ffedd5; color: #9a3412; }
+
+    /* ========== SCOREBOARD PODIUM ROW COLOURS ========== */
+    .grid-row.podium-1 .grid-cell { background-color: #fffdf5 !important; border-color: #fbbf24 !important; box-shadow: 0 0 0 1px #fbbf24 inset; }
+    .grid-row.podium-2 .grid-cell { background-color: #fbfcfd !important; border-color: #94a3b8 !important; box-shadow: 0 0 0 1px #94a3b8 inset; }
+    .grid-row.podium-3 .grid-cell { background-color: #fffaf5 !important; border-color: #fdba74 !important; box-shadow: 0 0 0 1px #fdba74 inset; }
+    .grid-row.podium-1 .grid-cell.rank-cell { background-color: #fef3c7 !important; border-color: #f59e0b !important; color: #78350f !important; }
+    .grid-row.podium-2 .grid-cell.rank-cell { background-color: #f1f5f9 !important; border-color: #64748b !important; color: #1e293b !important; }
+    .grid-row.podium-3 .grid-cell.rank-cell { background-color: #ffedd5 !important; border-color: #ea580c !important; color: #7c2d12 !important; }
+    body.fullscreen-active .grid-row.podium-1 .grid-cell { background-color: #fffdf5 !important; border-color: #fbbf24 !important; }
+    body.fullscreen-active .grid-row.podium-2 .grid-cell { background-color: #fbfcfd !important; border-color: #94a3b8 !important; }
+    body.fullscreen-active .grid-row.podium-3 .grid-cell { background-color: #fffaf5 !important; border-color: #fdba74 !important; }
+
+    /* ---------- Fullscreen (white theme) ---------- */
+    body.fullscreen-active { background: #ffffff; padding: 0; align-items: stretch; }
+    body.fullscreen-active .container { max-width: none; width: 100vw; border-radius: 0; padding: 12px; background: #ffffff; box-shadow: none; min-height: 100vh; display: flex; flex-direction: column; }
+    body.fullscreen-active .input-section, body.fullscreen-active h1, body.fullscreen-active .subtitle, body.fullscreen-active .footer-note { display: none; }
+    body.fullscreen-active .main-layout { flex: 1; min-height: 0; gap: 12px; }
+    body.fullscreen-active .scoreboard-wrapper { border: 1px solid #e3ebf3; border-radius: 16px; }
+    body.fullscreen-active .contest-title-bar { font-size: 1.4rem; }
+    body.fullscreen-active .scoreboard-viewport { height: calc(100vh - 100px); }
+    body.fullscreen-active .side-panel { width: 340px; }
+    body.fullscreen-active .side-panel .panel-section { background: #ffffff; border-color: #e3ebf3; }
+
+    .fullscreen-toggle { position: fixed; top: 12px; right: 12px; z-index: 500; background: #1d5b8c; color: white; border: none; font-size: 0.85rem; font-weight: 700; padding: 8px 16px; border-radius: 60px; cursor: pointer; letter-spacing: 0.05em; box-shadow: 0 4px 12px rgba(26,78,128,0.25); display: none; }
+    body.fullscreen-active .fullscreen-toggle { display: inline-flex; align-items: center; gap: 6px; }
+    .fullscreen-toggle:hover { background: #144a73; }
+
+    .scoreboard-viewport { position: relative; overflow-y: auto; overflow-x: auto; height: 500px; padding: 4px 0; background: #ffffff; }
+    .grid-table { display: grid; min-width: 900px; background: transparent; gap: 4px; padding: 4px; }
+    .grid-header { display: grid; grid-template-columns: 70px minmax(200px, 1fr) repeat(auto-fit, minmax(70px, 1fr)) 90px; gap: 4px; position: sticky; top: 0; z-index: 20; background: #ffffff; padding-bottom: 2px; }
+    .grid-header .grid-cell { background: #f7fafc; border: 2px solid #e3ebf3; border-radius: 10px; padding: 10px 6px; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: #103c5c; text-align: center; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,20,30,0.02); }
+    .grid-row { display: grid; grid-template-columns: 70px minmax(200px, 1fr) repeat(auto-fit, minmax(70px, 1fr)) 90px; gap: 4px; position: absolute; left: 0; right: 0; transition: transform 0.8s cubic-bezier(0.22,1,0.36,1), background-color 0.4s; will-change: transform; }
+    .grid-row .grid-cell { background: #ffffff; border: 2px solid #eef2f7; border-radius: 10px; padding: 8px 6px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 500; color: #1e3a5f; transition: background-color 0.4s, border-color 0.4s, color 0.3s, box-shadow 0.3s; position: relative; min-height: 44px; }
+    .grid-row .grid-cell.rank-cell { font-weight: 700; font-size: 1rem; color: #2d4e6e; background: #f7fafc; border-color: #e3ebf3; }
+    .grid-row .grid-cell.contestant-cell-grid { display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 8px; justify-content: flex-start; text-align: left; }
+    .lock-icon-left { font-size: 1rem; color: #16a34a; opacity: 0; transform: scale(0.2) rotate(-30deg); pointer-events: none; flex-shrink: 0; transition: opacity 0.3s, transform 0.3s; filter: drop-shadow(0 2px 4px rgba(22,163,74,0.5)); width: 20px; text-align: center; }
+    .lock-icon-left.show { animation: lock-pop-in 1.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .lock-icon-left.persist { opacity: 1; transform: scale(1) rotate(0deg); animation: none; color: #16a34a; filter: drop-shadow(0 1px 2px rgba(22,163,74,0.4)); }
+    @keyframes lock-pop-in { 0% { opacity: 0; transform: scale(0.2) rotate(-30deg); } 25% { opacity: 1; transform: scale(1.5) rotate(8deg); } 45% { opacity: 1; transform: scale(1) rotate(0deg); } 80% { opacity: 1; transform: scale(1) rotate(0deg); } 100% { opacity: 1; transform: scale(1) rotate(0deg); } }
+    .avatar-sm { width: 26px; height: 26px; border-radius: 50%; background: #eaf1f8; text-align: center; line-height: 26px; font-size: 12px; font-weight: 700; color: #1e3a5f; flex-shrink: 0; }
+    .contestant-name-grid { font-weight: 600; color: #0b2b41; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.88rem; }
+    .task-score-grid { font-weight: 600; font-size: 0.9rem; color: #1d3e5c; display: inline-block; min-width: 24px; text-align: center; transition: color 0.3s, font-weight 0.3s; }
+    .task-score-grid.hidden-score { color: #c5d2e0; font-weight: 400; }
+    .task-score-grid.zero-score { color: #b0c4d4; font-weight: 500; }
+    .task-score-grid.task-accepted { color: #0b6e3f; font-weight: 700; }
+    .total-score-grid { font-weight: 700; color: #0c2e4b; background: #f7fafc; border-radius: 40px; padding: 6px 14px; display: inline-block; min-width: 60px; font-size: 0.9rem; transition: background 0.4s; }
+    .total-score-grid.hidden-total { color: #c5d2e0; background: #fbfcfd; }
+
+    .grid-row.revealed .grid-cell { background-color: #fffbeb !important; border-color: #fbbf24 !important; }
+    .grid-row.active-row .grid-cell { background-color: #f0f7ff !important; border-color: #93c5fd !important; }
+    .grid-cell.current-inspect { outline: 3px solid #e11d48 !important; outline-offset: -3px; background-color: #fff1f2 !important; border-color: #e11d48 !important; }
+    .grid-cell.current-inspect-rank { outline: 3px solid #e11d48 !important; outline-offset: -3px; background-color: #fff1f2 !important; border-color: #e11d48 !important; }
+    .grid-cell.rank-up { background-color: #f0fdf4 !important; border-color: #16a34a !important; color: #166534 !important; font-weight: 800 !important; }
+
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.4); color: #d97706; } 100% { transform: scale(1); } }
+    .task-pulse { display: inline-block; animation: pulse 0.6s ease-out; }
+    @keyframes pulse-zero { 0% { transform: scale(1); } 50% { transform: scale(1.15); color: #94a3b8; } 100% { transform: scale(1); } }
+    .task-pulse-zero { display: inline-block; animation: pulse-zero 0.35s ease-out; }
+
+    .placeholder-msg { text-align: center; padding: 2.5rem; color: #6b8aa6; font-style: italic; background: #ffffff; border-radius: 20px; }
+    .row-height-spacer { display: block; width: 100%; pointer-events: none; }
+
+    .grid-table { --task-cols: repeat(5, minmax(70px, 1fr)); }
+    .grid-header, .grid-row { grid-template-columns: 70px minmax(200px, 1fr) var(--task-cols) 90px; }
+
+    .rank-pause-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 14px; background: #ffffff; border: 3px solid #1d6b9e; border-radius: 18px; opacity: 0; transform: scale(0.9); transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1); text-align: center; margin-bottom: 8px; }
+    .rank-pause-card.show { opacity: 1; transform: scale(1); }
+    .rank-pause-card .rpc-arrow { font-size: 2.2rem; color: #1d6b9e; line-height: 1; }
+    .rank-pause-card .rpc-detail { font-size: 1rem; font-weight: 700; color: #0b2b41; font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+    .rank-pause-card .rpc-name { font-size: 0.9rem; font-weight: 600; color: #3f5a72; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rank-pause-card .rpc-progress { width: 100%; height: 4px; background: #eef2f7; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+    .rank-pause-card .rpc-progress-bar { height: 100%; width: 100%; background: #1d6b9e; border-radius: 4px; }
+    @keyframes rpc-fill { from { width: 100%; } to { width: 0%; } }
+  </style>
+</head>
+<body>
+<button class="fullscreen-toggle" id="fullscreenToggle">⛶ EXIT FULLSCREEN</button>
+
+<!-- ========== CENTERED TOP-5 PODIUM POPUP ========== -->
+<div class="podium-overlay" id="podiumOverlay">
+  <div class="podium-modal">
+    <button class="pm-close" id="podiumCloseBtn" title="Close">✕</button>
+    <div class="pm-title" id="podiumTitle">🏆 Final Standings</div>
+    <div class="pm-subtitle" id="podiumSubtitle">Top 5</div>
+    <div class="pm-list" id="podiumList"></div>
+  </div>
+</div>
+
+<div class="container">
+  <h1>Scoreboard Animation</h1>
+
+  <div class="input-section">
+    <label> Import scoreboard from WYKOJ (HTML table)</label>
+    <input type="text" class="name-input" id="contestNameInput" placeholder="Contest name" maxlength="80">
+    <textarea id="htmlInput" placeholder="Paste the <table>...</table> HTML here..."></textarea>
+    <div class="button-row">
+      <button id="loadBtn">▶ Load &amp; Sweep</button>
+      <button id="resetBtn" class="secondary">⟲ Reset</button>
+      <button id="fullscreenBtn" class="secondary">⛶ Fullscreen (window)</button>
+      <div class="speed-control">
+        <label for="speedSlider"> Speed</label>
+        <input type="range" id="speedSlider" min="50" max="3000" value="900" step="50">
+        <span class="speed-value" id="speedValue">0.9s</span>
+      </div>
+      <div class="topx-control">
+        <label for="topXInput">🏆 Top X</label>
+        <input type="number" id="topXInput" min="1" max="50" value="5">
+      </div>
+      <span class="status" id="statusMsg">Ready</span>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <div id="scoreboardContainer" class="scoreboard-wrapper">
+      <div class="contest-title-bar" id="contestTitleBar"></div>
+      <div class="placeholder-msg">— Scoreboard will appear here —</div>
+    </div>
+
+    <div class="side-panel">
+      <div class="panel-section">
+        <div class="panel-title"><span class="dot" id="rankDot"></span> Rank Change</div>
+        <div id="rankPanelBody"><div class="panel-empty">Waiting for a rank change…</div></div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-title"><span class="dot" id="lockDot"></span> Position Locks</div>
+        <div id="lockPanelBody"><div class="panel-empty">No locks yet…</div></div>
+      </div>
+      <div class="panel-section" id="fixedSection" style="display:none;">
+        <div class="fixed-panel-card" id="fixedPanelCard">
+          <div class="fpc-word">FIXED</div>
+          <div class="fpc-rank" id="fpcRankText">Rank #—</div>
+          <div class="fpc-name" id="fpcNameText"></div>
+          <div class="fpc-queue" id="fpcQueueText" style="display:none;"></div>
+          <button class="fpc-btn" id="fpcContinueBtn">▶ CONTINUE</button>
+        </div>
+      </div>
+      <div class="panel-section" id="rankPauseSection" style="display:none;">
+        <div class="rank-pause-card" id="rankPauseCard">
+          <div class="rpc-arrow">↑</div>
+          <div class="rpc-detail" id="rpcDetailText">Rank #— → #—</div>
+          <div class="rpc-name" id="rpcNameText"></div>
+          <div class="rpc-progress"><div class="rpc-progress-bar" id="rpcProgressBar"></div></div>
+        </div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-title"><span class="dot" id="topxDot"></span> Top <span id="topxCountTitle">5</span></div>
+        <div id="topxPanelBody"><div class="panel-empty">Final standings appear at the end…</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const htmlInput = document.getElementById('htmlInput');
+    const contestNameInput = document.getElementById('contestNameInput');
+    const contestTitleBar = document.getElementById('contestTitleBar');
+    const loadBtn = document.getElementById('loadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const fullscreenToggle = document.getElementById('fullscreenToggle');
+    const container = document.getElementById('scoreboardContainer');
+    const statusMsg = document.getElementById('statusMsg');
+    const speedSlider = document.getElementById('speedSlider');
+    const speedValue = document.getElementById('speedValue');
+    const topXInput = document.getElementById('topXInput');
+
+    const podiumOverlay = document.getElementById('podiumOverlay');
+    const podiumCloseBtn = document.getElementById('podiumCloseBtn');
+    const podiumTitle = document.getElementById('podiumTitle');
+    const podiumSubtitle = document.getElementById('podiumSubtitle');
+    const podiumList = document.getElementById('podiumList');
+
+    const rankPanelBody = document.getElementById('rankPanelBody');
+    const lockPanelBody = document.getElementById('lockPanelBody');
+    const fixedSection = document.getElementById('fixedSection');
+    const fixedPanelCard = document.getElementById('fixedPanelCard');
+    const fpcRankText = document.getElementById('fpcRankText');
+    const fpcNameText = document.getElementById('fpcNameText');
+    const fpcQueueText = document.getElementById('fpcQueueText');
+    const fpcContinueBtn = document.getElementById('fpcContinueBtn');
+    const rankPauseSection = document.getElementById('rankPauseSection');
+    const rankPauseCard = document.getElementById('rankPauseCard');
+    const rpcDetailText = document.getElementById('rpcDetailText');
+    const rpcNameText = document.getElementById('rpcNameText');
+    const rpcProgressBar = document.getElementById('rpcProgressBar');
+    const topxPanelBody = document.getElementById('topxPanelBody');
+    const topxCountTitle = document.getElementById('topxCountTitle');
+
+    const rankDot = document.getElementById('rankDot');
+    const lockDot = document.getElementById('lockDot');
+    const topxDot = document.getElementById('topxDot');
+
+    let animationTimer = null;
+    let isAnimating = false;
+    let isPaused = false;
+    const ROW_HEIGHT_FALLBACK = 56;
+
+    const ZERO_SCORE_FACTOR = 0.25;
+    const LOCK_EXTRA_PAUSE = 800;
+    const LOCK_LOCKOUT_MS = 800;
+    const RANK_UP_AUTO_PAUSE_MS = 50;
+
+    function getRevealDelay() { return parseInt(speedSlider.value, 10) || 900; }
+    function getTopX() { const v = parseInt(topXInput.value, 10); return (isNaN(v) || v < 1) ? 5 : v; }
+    function updateSpeedDisplay() { const v = getRevealDelay(); speedValue.textContent = (v / 1000).toFixed(2).replace(/0$/, '') + 's'; }
+    speedSlider.addEventListener('input', updateSpeedDisplay);
+    updateSpeedDisplay();
+
+    contestNameInput.addEventListener('input', function() {
+      contestTitleBar.textContent = contestNameInput.value.trim();
+    });
+
+    let viewportEl = null;
+    let bannerTimer = null;
+    let rankPauseTimer = null;
+
+    let fixedItems = [];
+    let fixedOnAllDone = null;
+    let fixedActive = false;
+
+    // ---------- podium popup ----------
+    function showPodium(working, topX) {
+      const sorted = [...working].sort((a, b) => {
+        if (b.currentTotal !== a.currentTotal) return b.currentTotal - a.currentTotal;
+        return a.username.localeCompare(b.username);
+      });
+      const top = sorted.slice(0, Math.min(topX, sorted.length));
+      const medals = ['🥇', '🥈', '🥉'];
+
+      const name = contestNameInput.value.trim();
+      podiumTitle.textContent = name ? `🏆 ${name}` : '🏆 Final Standings';
+      podiumSubtitle.textContent = `Top ${top.length} of ${sorted.length}`;
+
+      podiumList.innerHTML = '';
+      top.forEach((c, idx) => {
+        const row = document.createElement('div');
+        const rank = idx + 1;
+        row.className = `pm-row rank-${rank <= 5 ? rank : 5}`;
+        row.style.animationDelay = `${idx * 0.07}s`;
+        row.innerHTML = `
+          <div class="pm-medal">${idx < 3 ? medals[idx] : '&nbsp;'}</div>
+          <div class="pm-rank-num">#${rank}</div>
+          <div class="pm-name">${escapeHtml(c.displayName)}</div>
+          <div class="pm-score">${c.currentTotal}</div>
+        `;
+        podiumList.appendChild(row);
+      });
+
+      podiumOverlay.style.display = 'flex';
+      void podiumOverlay.offsetWidth;
+      podiumOverlay.classList.add('show');
+    }
+
+    function hidePodium() {
+      podiumOverlay.classList.remove('show');
+      setTimeout(() => { podiumOverlay.style.display = 'none'; }, 400);
+    }
+
+    podiumCloseBtn.addEventListener('click', hidePodium);
+    podiumOverlay.addEventListener('click', function(e) { if (e.target === podiumOverlay) hidePodium(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && podiumOverlay.classList.contains('show')) hidePodium(); });
+
+    function enterFullscreen() { document.body.classList.add('fullscreen-active'); }
+    function exitFullscreen() { document.body.classList.remove('fullscreen-active'); }
+    fullscreenBtn.addEventListener('click', enterFullscreen);
+    fullscreenToggle.addEventListener('click', exitFullscreen);
+
+    function parseTableFromHTML(htmlString) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlString, 'text/html');
+      const table = doc.querySelector('table');
+      if (!table) throw new Error('No <table> found in input');
+      const thead = table.querySelector('thead');
+      if (!thead) throw new Error('Missing <thead>');
+      const headerRow = thead.querySelector('tr');
+      const ths = headerRow ? Array.from(headerRow.querySelectorAll('th')) : [];
+      if (ths.length < 3) throw new Error('Need at least Rank, Contestant, and one task column');
+      const taskHeaders = [];
+      for (let i = 2; i < ths.length - 1; i++) {
+        const th = ths[i];
+        const clone = th.cloneNode(true);
+        clone.querySelectorAll('.task-title').forEach(el => el.remove());
+        let taskName = clone.textContent.trim();
+        if (!taskName) taskName = `Task${i-1}`;
+        taskHeaders.push(taskName);
+      }
+      const tbody = table.querySelector('tbody');
+      if (!tbody) throw new Error('Missing <tbody>');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const contestants = rows.map((row, idx) => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        if (cells.length < 3) return null;
+        const contestantCell = cells[1];
+        const anchor = contestantCell.querySelector('a');
+        let displayName = anchor ? anchor.textContent.trim() : contestantCell.textContent.trim();
+        let username = displayName;
+        const dashIdx = displayName.indexOf(' - ');
+        if (dashIdx !== -1) username = displayName.substring(0, dashIdx).trim();
+        if (!username) username = `user${idx}`;
+        const taskScores = [];
+        for (let c = 2; c < cells.length - 1; c++) {
+          const cell = cells[c];
+          const span = cell.querySelector('span');
+          let scoreText = '';
+          if (span) { const match = span.textContent.trim().match(/\d+/); scoreText = match ? match[0] : ''; }
+          else { const match = cell.textContent.trim().match(/\d+/); scoreText = match ? match[0] : ''; }
+          taskScores.push(scoreText ? parseInt(scoreText, 10) : 0);
+        }
+        const totalCell = cells[cells.length - 1];
+        const totalMatch = totalCell.textContent.trim().match(/\d+/);
+        const total = totalMatch ? parseInt(totalMatch[0], 10) : 0;
+        return { username, displayName, taskScores, total, currentTasks: new Array(taskScores.length).fill(0), currentTotal: 0, revealed: new Array(taskScores.length).fill(false) };
+      }).filter(c => c !== null);
+      if (contestants.length === 0) throw new Error('No contestant rows found');
+      const numTasks = taskHeaders.length;
+      contestants.forEach(c => {
+        while (c.taskScores.length < numTasks) c.taskScores.push(0);
+        if (c.taskScores.length > numTasks) c.taskScores = c.taskScores.slice(0, numTasks);
+        c.currentTasks = new Array(numTasks).fill(0);
+        c.revealed = new Array(numTasks).fill(false);
+      });
+      return { contestants, taskHeaders, numTasks };
+    }
+
+    function buildGridSkeleton(contestants, taskHeaders) {
+      const numTasks = taskHeaders.length;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'scoreboard-viewport';
+      viewportEl = wrapper;
+      const gridTable = document.createElement('div');
+      gridTable.className = 'grid-table';
+      gridTable.style.setProperty('--task-cols', `repeat(${numTasks}, minmax(70px, 1fr))`);
+      const headerRow = document.createElement('div');
+      headerRow.className = 'grid-header';
+      headerRow.style.setProperty('--task-cols', `repeat(${numTasks}, minmax(70px, 1fr))`);
+      const rankHeader = document.createElement('div'); rankHeader.className = 'grid-cell'; rankHeader.textContent = 'Rank'; headerRow.appendChild(rankHeader);
+      const contestantHeader = document.createElement('div'); contestantHeader.className = 'grid-cell'; contestantHeader.textContent = 'Contestant'; headerRow.appendChild(contestantHeader);
+      taskHeaders.forEach(thText => { const th = document.createElement('div'); th.className = 'grid-cell'; th.textContent = thText; headerRow.appendChild(th); });
+      const totalHeader = document.createElement('div'); totalHeader.className = 'grid-cell'; totalHeader.textContent = 'Total'; headerRow.appendChild(totalHeader);
+      gridTable.appendChild(headerRow);
+      const rowMap = new Map();
+      const tbodyContainer = document.createElement('div');
+      tbodyContainer.style.position = 'relative';
+      tbodyContainer.style.width = '100%';
+      contestants.forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'grid-row';
+        row.dataset.username = c.username;
+        row.style.setProperty('--task-cols', `repeat(${numTasks}, minmax(70px, 1fr))`);
+        const rankCell = document.createElement('div'); rankCell.className = 'grid-cell rank-cell'; rankCell.textContent = '—'; row.appendChild(rankCell);
+        const contestantCell = document.createElement('div'); contestantCell.className = 'grid-cell contestant-cell-grid';
+        const lockLeft = document.createElement('span'); lockLeft.className = 'lock-icon-left'; lockLeft.textContent = '🔒'; lockLeft.setAttribute('aria-hidden', 'true'); contestantCell.appendChild(lockLeft);
+        const avatar = document.createElement('span'); avatar.className = 'avatar-sm'; avatar.textContent = c.username.charAt(0).toUpperCase(); contestantCell.appendChild(avatar);
+        const nameSpan = document.createElement('span'); nameSpan.className = 'contestant-name-grid'; nameSpan.textContent = c.displayName; contestantCell.appendChild(nameSpan);
+        row.appendChild(contestantCell);
+        const taskCells = []; const taskSpans = [];
+        for (let t = 0; t < numTasks; t++) {
+          const td = document.createElement('div'); td.className = 'grid-cell';
+          const span = document.createElement('span'); span.className = 'task-score-grid hidden-score'; span.textContent = '–';
+          td.appendChild(span); row.appendChild(td); taskCells.push(td); taskSpans.push(span);
+        }
+        const totalCell = document.createElement('div'); totalCell.className = 'grid-cell';
+        const totalSpan = document.createElement('span'); totalSpan.className = 'total-score-grid hidden-total'; totalSpan.textContent = '–';
+        totalCell.appendChild(totalSpan); row.appendChild(totalCell);
+        tbodyContainer.appendChild(row);
+        rowMap.set(c.username, { tr: row, rankTd: rankCell, taskTds: taskCells, taskSpans: taskSpans, totalSpan: totalSpan, lockLeft: lockLeft });
+      });
+      gridTable.appendChild(tbodyContainer);
+      const spacer = document.createElement('div'); spacer.className = 'row-height-spacer';
+      wrapper.appendChild(gridTable); wrapper.appendChild(spacer);
+      return { wrapper, gridTable, tbodyContainer, rowMap, spacer };
+    }
+
+    function clearInspectHighlights(rowMap) {
+      rowMap.forEach(refs => { refs.taskTds.forEach(td => td.classList.remove('current-inspect')); refs.rankTd.classList.remove('current-inspect-rank'); });
+    }
+
+    function layoutRows(contestants, rowMap, tbodyContainer, spacer, highlightUser, pulseTask, activeUser, revealTarget) {
+      const sorted = [...contestants].sort((a, b) => { if (b.currentTotal !== a.currentTotal) return b.currentTotal - a.currentTotal; return a.username.localeCompare(b.username); });
+      const rankOf = new Map();
+      sorted.forEach((c, idx) => {
+        const refs = rowMap.get(c.username); if (!refs) return;
+        const { tr, rankTd, taskSpans, totalSpan } = refs;
+        rankTd.textContent = idx + 1; rankOf.set(c.username, idx + 1);
+        for (let t = 0; t < taskSpans.length; t++) {
+          const span = taskSpans[t];
+          if (c.revealed[t]) {
+            const val = c.currentTasks[t]; span.textContent = val;
+            if (val === 0) span.className = 'task-score-grid zero-score';
+            else if (val === 100) span.className = 'task-score-grid task-accepted';
+            else span.className = 'task-score-grid';
+          } else { span.textContent = '–'; span.className = 'task-score-grid hidden-score'; }
+        }
+        const anyRevealed = c.revealed.some(r => r === true);
+        if (anyRevealed) { totalSpan.textContent = c.currentTotal; totalSpan.className = 'total-score-grid'; }
+        else { totalSpan.textContent = '–'; totalSpan.className = 'total-score-grid hidden-total'; }
+        tr.dataset.pos = idx;
+      });
+      let rowHeight = ROW_HEIGHT_FALLBACK;
+      const firstRow = tbodyContainer.querySelector('.grid-row');
+      if (firstRow) { const h = firstRow.getBoundingClientRect().height; if (h > 10) rowHeight = h; }
+      sorted.forEach((c, idx) => { const refs = rowMap.get(c.username); if (!refs) return; refs.tr.style.transform = `translateY(${idx * rowHeight}px)`; });
+      if (spacer) spacer.style.height = (sorted.length * rowHeight) + 'px';
+      rowMap.forEach(r => { r.tr.classList.remove('active-row'); r.rankTd.classList.remove('rank-up'); });
+      if (highlightUser) {
+        const refs = rowMap.get(highlightUser);
+        if (refs) {
+          refs.tr.classList.add('revealed');
+          if (pulseTask !== undefined && pulseTask !== null && refs.taskSpans[pulseTask]) {
+            const span = refs.taskSpans[pulseTask];
+            span.classList.remove('task-pulse', 'task-pulse-zero'); void span.offsetWidth;
+            const revealedVal = refs.taskSpans[pulseTask].textContent;
+            if (revealedVal === '0') span.classList.add('task-pulse-zero'); else span.classList.add('task-pulse');
+          }
+          setTimeout(() => refs.tr.classList.remove('revealed'), 700);
+        }
+      }
+      if (activeUser) { const refs = rowMap.get(activeUser); if (refs) refs.tr.classList.add('active-row'); }
+      clearInspectHighlights(rowMap);
+      if (revealTarget) {
+        const refs = rowMap.get(revealTarget.username);
+        if (refs) { if (refs.taskTds[revealTarget.taskIndex]) refs.taskTds[revealTarget.taskIndex].classList.add('current-inspect'); refs.rankTd.classList.add('current-inspect-rank'); }
+      }
+      return { rowHeight, sorted, rankOf };
+    }
+
+    function applyPodiumColours(rowMap, working) {
+      const sorted = [...working].sort((a, b) => { if (b.currentTotal !== a.currentTotal) return b.currentTotal - a.currentTotal; return a.username.localeCompare(b.username); });
+      rowMap.forEach(refs => refs.tr.classList.remove('podium-1', 'podium-2', 'podium-3'));
+      sorted.slice(0, 3).forEach((c, idx) => {
+        const refs = rowMap.get(c.username);
+        if (refs) refs.tr.classList.add(`podium-${idx + 1}`);
+      });
+    }
+
+    function scrollRowToTop(username, rowMap, rowHeight) {
+      if (!viewportEl) return;
+      const refs = rowMap.get(username); if (!refs) return;
+      const pos = parseInt(refs.tr.dataset.pos || '0', 10);
+      const headerHeight = 52;
+      const targetScroll = Math.max(0, pos * rowHeight - headerHeight - 8);
+      if (Math.abs(viewportEl.scrollTop - targetScroll) > 4) viewportEl.scrollTop = targetScroll;
+    }
+
+    function showLockPop(username, rowMap) {
+      const refs = rowMap.get(username); if (!refs || !refs.lockLeft) return;
+      const lock = refs.lockLeft;
+      lock.classList.remove('show', 'persist'); void lock.offsetWidth;
+      lock.classList.add('show');
+      setTimeout(() => { lock.classList.remove('show'); lock.classList.add('persist'); }, LOCK_LOCKOUT_MS);
+    }
+
+    let rankPanelTimer = null;
+    function showRankChangeInPanel(oldRank, newRank, displayName) {
+      rankDot.classList.add('active');
+      rankPanelBody.innerHTML = '';
+      const card = document.createElement('div');
+      card.className = 'rank-change-card';
+      card.innerHTML = `<div class="rc-block"><div class="rc-label">Before</div><div class="rc-number old">${oldRank}</div></div><div class="rc-arrow">→</div><div class="rc-block"><div class="rc-label">After</div><div class="rc-number new">${newRank}</div></div><div class="rc-name">${escapeHtml(displayName)}</div>`;
+      rankPanelBody.appendChild(card);
+      requestAnimationFrame(() => card.classList.add('show'));
+      if (rankPanelTimer) clearTimeout(rankPanelTimer);
+      rankPanelTimer = setTimeout(() => {
+        rankDot.classList.remove('active'); card.classList.remove('show');
+        setTimeout(() => { if (rankPanelBody.contains(card)) rankPanelBody.innerHTML = '<div class="panel-empty">Waiting for a rank change…</div>'; }, 400);
+      }, Math.max(2500, getRevealDelay() * 2));
+    }
+
+    function showLockInPanel(rank, displayName) {
+      lockDot.classList.add('active');
+      const empty = lockPanelBody.querySelector('.panel-empty'); if (empty) empty.remove();
+      const notify = document.createElement('div');
+      notify.className = 'lock-notify';
+      notify.innerHTML = `<div class="ln-icon">🔒</div><div class="ln-body"><div class="ln-name">${escapeHtml(displayName)}</div><div class="ln-rank">Rank #${rank}</div></div>`;
+      lockPanelBody.appendChild(notify);
+      requestAnimationFrame(() => notify.classList.add('show'));
+      setTimeout(() => {
+        notify.classList.remove('show');
+        setTimeout(() => {
+          if (notify.parentNode) notify.parentNode.removeChild(notify);
+          if (lockPanelBody.children.length === 0) { lockPanelBody.innerHTML = '<div class="panel-empty">No locks yet…</div>'; lockDot.classList.remove('active'); }
+        }, 400);
+      }, 4500);
+    }
+
+    function renderFixedCard() {
+      if (fixedItems.length === 0) {
+        fixedPanelCard.classList.remove('show');
+        fixedSection.style.display = 'none';
+        fixedActive = false;
+        fpcQueueText.style.display = 'none';
+        return;
+      }
+      const item = fixedItems[0];
+      fpcRankText.textContent = 'Rank #' + item.rank;
+      fpcNameText.textContent = item.displayName;
+      if (fixedItems.length > 1) {
+        fpcQueueText.style.display = 'inline-block';
+        fpcQueueText.textContent = `+${fixedItems.length - 1} more`;
+      } else {
+        fpcQueueText.style.display = 'none';
+      }
+      fixedSection.style.display = 'block';
+      fixedPanelCard.classList.add('show');
+      fixedActive = true;
+    }
+
+    function hideFixedCard() {
+      fixedPanelCard.classList.remove('show');
+      fixedSection.style.display = 'none';
+      fixedActive = false;
+      fpcQueueText.style.display = 'none';
+    }
+
+    fpcContinueBtn.addEventListener('click', function() {
+      if (fixedItems.length === 0) return;
+      fixedItems.shift();
+      if (fixedItems.length > 0) {
+        renderFixedCard();
+      } else {
+        hideFixedCard();
+        const done = fixedOnAllDone;
+        fixedOnAllDone = null;
+        if (done) done();
+      }
+    });
+
+    function enqueueFixed(items, onAllDone) {
+      if (!items || items.length === 0) { if (onAllDone) onAllDone(); return; }
+      fixedItems = fixedItems.concat(items);
+      if (!fixedActive) {
+        fixedOnAllDone = onAllDone;
+        renderFixedCard();
+      } else {
+        if (!fixedOnAllDone) fixedOnAllDone = onAllDone;
+        if (fixedItems.length > 1) {
+          fpcQueueText.style.display = 'inline-block';
+          fpcQueueText.textContent = `+${fixedItems.length - 1} more`;
+        }
+      }
+    }
+
+    function showRankPauseInPanel(oldRank, newRank, displayName) {
+      rpcDetailText.textContent = `Rank #${oldRank} → #${newRank}`;
+      rpcNameText.textContent = displayName;
+      rankPauseSection.style.display = 'block';
+      rpcProgressBar.style.animation = 'none'; void rpcProgressBar.offsetWidth;
+      rpcProgressBar.style.animation = `rpc-fill ${RANK_UP_AUTO_PAUSE_MS}ms linear forwards`;
+      requestAnimationFrame(() => rankPauseCard.classList.add('show'));
+    }
+    function hideRankPauseInPanel() {
+      rankPauseCard.classList.remove('show');
+      setTimeout(() => { rankPauseSection.style.display = 'none'; }, 350);
+    }
+
+    function showTopXInPanel(working, topX) {
+      topxDot.classList.add('active');
+      topxCountTitle.textContent = topX;
+      const sorted = [...working].sort((a, b) => { if (b.currentTotal !== a.currentTotal) return b.currentTotal - a.currentTotal; return a.username.localeCompare(b.username); });
+      const top = sorted.slice(0, topX);
+      const medals = ['🥇', '🥈', '🥉'];
+      topxPanelBody.innerHTML = '';
+      const card = document.createElement('div');
+      card.className = 'topx-panel-card';
+      top.forEach((c, idx) => {
+        const row = document.createElement('div');
+        row.className = 'tpc-row';
+        row.innerHTML = `<div class="tpc-medal">${idx < 3 ? medals[idx] : ''}</div><div class="tpc-rank">#${idx + 1}</div><div class="tpc-name">${escapeHtml(c.displayName)}</div><div class="tpc-score">${c.currentTotal}</div>`;
+        card.appendChild(row);
+      });
+      topxPanelBody.appendChild(card);
+      requestAnimationFrame(() => card.classList.add('show'));
+    }
+
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
+
+    function clearPanels() {
+      rankPanelBody.innerHTML = '<div class="panel-empty">Waiting for a rank change…</div>';
+      lockPanelBody.innerHTML = '<div class="panel-empty">No locks yet…</div>';
+      topxPanelBody.innerHTML = '<div class="panel-empty">Final standings appear at the end…</div>';
+      rankDot.classList.remove('active'); lockDot.classList.remove('active'); topxDot.classList.remove('active');
+      hideFixedCard(); hideRankPauseInPanel(); hidePodium();
+      fixedItems = []; fixedOnAllDone = null; fixedActive = false;
+      if (bannerTimer) { clearTimeout(bannerTimer); bannerTimer = null; }
+      if (rankPanelTimer) { clearTimeout(rankPanelTimer); rankPanelTimer = null; }
+      if (rankPauseTimer) { clearTimeout(rankPauseTimer); rankPauseTimer = null; }
+    }
+
+    function renderFullGrid(contestants, taskHeaders) {
+      const { wrapper, gridTable, tbodyContainer, rowMap, spacer } = buildGridSkeleton(contestants, taskHeaders);
+      const titleBar = container.querySelector('.contest-title-bar');
+      container.innerHTML = '';
+      if (titleBar) container.appendChild(titleBar);
+      container.appendChild(wrapper);
+      const initSorted = [...contestants].sort((a, b) => a.username.localeCompare(b.username));
+      initSorted.forEach(c => { c.currentTasks = c.taskScores.map(() => 0); c.currentTotal = 0; c.revealed = c.taskScores.map(() => false); });
+      const { rowHeight } = layoutRows(initSorted, rowMap, tbodyContainer, spacer, null, null, null, null);
+      return { rowMap, tbodyContainer, spacer, rowHeight, taskHeaders };
+    }
+
+    function findNewlyLocked(working) {
+      const sortedNow = [...working].sort((a, b) => { if (b.currentTotal !== a.currentTotal) return b.currentTotal - a.currentTotal; return a.username.localeCompare(b.username); });
+      const newlyLocked = [];
+      for (let r = 0; r < sortedNow.length; r++) {
+        const c = sortedNow[r]; if (c._locked) continue;
+        let allResolved = true;
+        for (let k = r; k < sortedNow.length; k++) {
+          if (sortedNow[k].revealed.some(rev => rev === false)) { allResolved = false; break; }
+        }
+        if (allResolved) { c._locked = true; newlyLocked.push({ username: c.username, rank: r + 1, displayName: c.displayName }); }
+      }
+      return newlyLocked;
+    }
+
+    function startSweep(contestants, taskHeaders, refs) {
+      if (animationTimer) { clearTimeout(animationTimer); animationTimer = null; }
+      clearPanels();
+      isPaused = false;
+      if (rankPauseTimer) { clearTimeout(rankPauseTimer); rankPauseTimer = null; }
+
+      const numTasks = taskHeaders.length;
+      const n = contestants.length;
+      const topX = getTopX();
+
+      const working = contestants.map(c => ({ ...c, currentTasks: c.taskScores.map(() => 0), currentTotal: 0, revealed: c.taskScores.map(() => false), _locked: false }));
+      working.sort((a, b) => a.username.localeCompare(b.username));
+      layoutRows(working, refs.rowMap, refs.tbodyContainer, refs.spacer, null, null, null, null);
+
+      let stepCount = 0;
+      const MAX_STEPS = n * numTasks * 6;
+
+      function currentRankOf(username) {
+        const sortedNow = [...working].sort((a, b) => { if (b.currentTotal !== a.currentTotal) return b.currentTotal - a.currentTotal; return a.username.localeCompare(b.username); });
+        const idx = sortedNow.findIndex(c => c.username === username);
+        return idx === -1 ? null : idx + 1;
+      }
+
+      function findNextUnrevealed() {
+        const sortedNow = [...working].sort((a, b) => { if (b.currentTotal !== a.currentTotal) return b.currentTotal - a.currentTotal; return a.username.localeCompare(b.username); });
+        for (let row = sortedNow.length - 1; row >= 0; row--) {
+          const c = sortedNow[row]; if (!c) continue;
+          for (let t = 0; t < numTasks; t++) { if (c.revealed[t] === false) return { contestant: c, rowIndex: row, taskIndex: t }; }
+        }
+        return null;
+      }
+
+      function finishSweep() {
+        isAnimating = false;
+        statusMsg.textContent = '✅ Sweep complete';
+        clearInspectHighlights(refs.rowMap);
+        layoutRows(working, refs.rowMap, refs.tbodyContainer, refs.spacer, null, null, null, null);
+        applyPodiumColours(refs.rowMap, working);
+        showTopXInPanel(working, topX);
+        setTimeout(() => showPodium(working, 5), 500);
+      }
+
+      function step() {
+        if (stepCount > MAX_STEPS) { finishSweep(); return; }
+        const next = findNextUnrevealed();
+        if (!next) { finishSweep(); return; }
+
+        const { contestant, taskIndex } = next;
+        const j = taskIndex;
+
+        clearInspectHighlights(refs.rowMap);
+        const refsRow = refs.rowMap.get(contestant.username);
+        if (refsRow && refsRow.taskTds[j]) {
+          refsRow.taskTds[j].classList.add('current-inspect');
+          refsRow.rankTd.classList.add('current-inspect-rank');
+          refsRow.tr.classList.add('active-row');
+        }
+        scrollRowToTop(contestant.username, refs.rowMap, refs.rowHeight);
+
+        const oldRank = currentRankOf(contestant.username);
+        const taskScore = contestant.taskScores[j];
+
+        contestant.revealed[j] = true;
+        contestant.currentTasks[j] = taskScore;
+        contestant.currentTotal = contestant.currentTasks.reduce((a, b) => a + b, 0);
+
+        const { rankOf } = layoutRows(working, refs.rowMap, refs.tbodyContainer, refs.spacer, contestant.username, j, contestant.username, null);
+        scrollRowToTop(contestant.username, refs.rowMap, refs.rowHeight);
+
+        const newRank = rankOf.get(contestant.username);
+        let rankIncreased = false;
+        if (oldRank !== null && newRank !== null && newRank < oldRank) {
+          rankIncreased = true;
+          const refsRow2 = refs.rowMap.get(contestant.username);
+          if (refsRow2) { refsRow2.rankTd.classList.add('rank-up'); setTimeout(() => refsRow2.rankTd.classList.remove('rank-up'), 1500); }
+          showRankChangeInPanel(oldRank, newRank, contestant.displayName);
+        }
+
+        const newlyLocked = findNewlyLocked(working);
+        newlyLocked.forEach(item => { showLockPop(item.username, refs.rowMap); showLockInPanel(item.rank, item.displayName); });
+        const topXLocked = newlyLocked.filter(item => item.rank <= topX);
+
+        let delay = getRevealDelay();
+        if (taskScore === 0) delay = Math.max(60, Math.round(delay * ZERO_SCORE_FACTOR));
+        if (newlyLocked.length > 0) delay = Math.max(delay, LOCK_EXTRA_PAUSE + getRevealDelay());
+
+        if (topXLocked.length > 0) {
+          stepCount++;
+          isPaused = true;
+          statusMsg.textContent = '⏸ Paused — top position fixed';
+          enqueueFixed(topXLocked, function() {
+            isPaused = false;
+            statusMsg.textContent = '⏳ Sweeping...';
+            const postLockDelay = newlyLocked.length > 0 ? Math.max(getRevealDelay(), LOCK_EXTRA_PAUSE) : getRevealDelay();
+            animationTimer = setTimeout(step, postLockDelay);
+          });
+          return;
+        }
+
+        if (rankIncreased) {
+          stepCount++;
+          isPaused = true;
+          statusMsg.textContent = '⏸ Paused — rank increased';
+          showRankPauseInPanel(oldRank, newRank, contestant.displayName);
+          if (rankPauseTimer) clearTimeout(rankPauseTimer);
+          rankPauseTimer = setTimeout(function() {
+            hideRankPauseInPanel();
+            isPaused = false;
+            statusMsg.textContent = '⏳ Sweeping...';
+            const pauseExtra = newlyLocked.length > 0 ? Math.max(getRevealDelay(), LOCK_EXTRA_PAUSE) : getRevealDelay();
+            animationTimer = setTimeout(step, pauseExtra);
+          }, RANK_UP_AUTO_PAUSE_MS);
+          return;
+        }
+
+        stepCount++;
+        animationTimer = setTimeout(step, delay);
+      }
+
+      isAnimating = true;
+      statusMsg.textContent = '⏳ Sweeping...';
+      animationTimer = setTimeout(step, 400);
+    }
+
+    function handleLoad() {
+      const rawHtml = htmlInput.value.trim();
+      if (!rawHtml) { alert('Please paste scoreboard HTML.'); return; }
+      if (animationTimer) { clearTimeout(animationTimer); animationTimer = null; }
+      clearPanels();
+      isAnimating = false;
+      isPaused = false;
+      if (rankPauseTimer) { clearTimeout(rankPauseTimer); rankPauseTimer = null; }
+
+      contestTitleBar.textContent = contestNameInput.value.trim();
+
+      try {
+        const { contestants, taskHeaders } = parseTableFromHTML(rawHtml);
+        const sorted = [...contestants].sort((a, b) => a.username.localeCompare(b.username));
+        sorted.forEach(c => { c.currentTasks = c.taskScores.map(() => 0); c.currentTotal = 0; c.revealed = c.taskScores.map(() => false); c._locked = false; });
+        const refs = renderFullGrid(sorted, taskHeaders);
+        window._scoreboardRefs = refs;
+        window._taskHeaders = taskHeaders;
+        statusMsg.textContent = '✅ Loaded. Sweeping...';
+        setTimeout(() => startSweep(sorted, taskHeaders, refs), 400);
+      } catch (err) {
+        alert('Error: ' + err.message);
+        statusMsg.textContent = '❌ Parse error';
+      }
+    }
+
+    function handleReset() {
+      if (animationTimer) { clearTimeout(animationTimer); animationTimer = null; }
+      if (rankPauseTimer) { clearTimeout(rankPauseTimer); rankPauseTimer = null; }
+      clearPanels();
+      isAnimating = false;
+      isPaused = false;
+      htmlInput.value = '';
+      container.innerHTML = '<div class="contest-title-bar" id="contestTitleBar"></div><div class="placeholder-msg">— Scoreboard will appear here —</div>';
+      const newTitleBar = container.querySelector('.contest-title-bar');
+      if (newTitleBar) newTitleBar.textContent = contestNameInput.value.trim();
+      statusMsg.textContent = 'Ready';
+      window._scoreboardRefs = null;
+      viewportEl = null;
+    }
+
+    loadBtn.addEventListener('click', handleLoad);
+    resetBtn.addEventListener('click', handleReset);
+  })();
+</script>
+</body>
+</html>
