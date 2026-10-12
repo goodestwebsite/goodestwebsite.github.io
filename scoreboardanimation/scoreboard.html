@@ -531,7 +531,7 @@
         const rankCell = document.createElement('div'); rankCell.className = 'grid-cell rank-cell'; rankCell.textContent = '—'; row.appendChild(rankCell);
         const contestantCell = document.createElement('div'); contestantCell.className = 'grid-cell contestant-cell-grid';
         const lockLeft = document.createElement('span'); lockLeft.className = 'lock-icon-left'; lockLeft.textContent = '🔒'; lockLeft.setAttribute('aria-hidden', 'true'); contestantCell.appendChild(lockLeft);
-        const avatar = document.createElement('span'); avatar.className = 'avatar-sm'; avatar.textContent = c.username.charAt(0).toUpperCase(); contestantCell.appendChild(avatar);
+        // const avatar = document.createElement('span'); avatar.className = 'avatar-sm'; avatar.textContent = c.username.charAt(0).toUpperCase(); contestantCell.appendChild(avatar);
         const nameSpan = document.createElement('span'); nameSpan.className = 'contestant-name-grid'; nameSpan.textContent = c.displayName; contestantCell.appendChild(nameSpan);
         row.appendChild(contestantCell);
         const taskCells = []; const taskSpans = [];
