@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSE Phy MC Answer</title>
+</head>
+<body>
+
+<h3>DSE Phy MC Answer</h3>
+
+<p>
+  <input type="number" id="codeInput" placeholder="e.g. 1804" min="0" step="1" inputmode="numeric" style="font-size: 1.2em; padding: 0.4em; width: 8em;">
+  <button onclick="lookupAnswer()" style="font-size: 1.2em; padding: 0.4em 1em;">Show answer</button>
+</p>
+
+<p id="result" style="font-size: 1.1em; line-height: 1.5;"></p>
+
+<hr>
+
+<!-- External answer data -->
+<script src="phy-ans.js"></script>
+
+<script>
+// =============================================
+// DO NOT EDIT BELOW (lookup logic)
+// =============================================
+
+function lookupAnswer() {
+  const inputEl = document.getElementById('codeInput');
+  const resultEl = document.getElementById('result');
+  const raw = inputEl.value.trim();
+
+  if (raw === '') {
+    resultEl.textContent = '❌ Please enter a code, e.g. 1804 = 2018 Q4.';
+    return;
+  }
+
+  const code = parseInt(raw, 10);
+  if (isNaN(code) || code < 0) {
+    resultEl.textContent = '❌ Please enter a valid number, e.g. 1804.';
+    return;
+  }
+
+  // Decode: last two digits = question number, first part + 2000 = year
+  // e.g. 1804 -> year 2000 + 18 = 2018, question 4
+  const qNo = code % 100;
+  const yearPart = Math.floor(code / 100);
+  const year = 2000 + yearPart;
+
+  if (qNo < 1) {
+    resultEl.textContent = `❌ Invalid question number in code ${code}.`;
+    return;
+  }
+
+  if (typeof answerBank === 'undefined') {
+    resultEl.textContent = '❌ Answer data not loaded. Make sure answers.js exists.';
+    return;
+  }
+
+  const yearData = answerBank[year];
+  if (!yearData) {
+    resultEl.textContent = `❌ No data for year ${year}. Available years: ${Object.keys(answerBank).join(', ') || 'none yet'}`;
+    return;
+  }
+
+  const entry = yearData[qNo];
+  if (!entry) {
+    resultEl.textContent = `❌ Question ${qNo} not found for year ${year}.`;
+    return;
+  }
+
+  const answer = entry.ans;
+  const rate = entry.rate;
+
+  let msg = `Year ${year}, Q${qNo}: Answer is ${answer}`;
+  if (rate !== null && rate !== undefined) {
+    msg += `  (Correct rate: ${rate})`;
+  }
+
+  resultEl.textContent = msg;
+}
+</script>
+
+</body>
+</html>
