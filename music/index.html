@@ -3,7 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Audio Playlist Player</title>
+
+<!-- ===== PWA / iOS Home Screen ===== -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Playlist">
+<meta name="application-name" content="Playlist">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#0d0f14">
+<meta name="color-scheme" content="dark">
+<!-- manifest + apple-touch-icon are injected by JS (self-contained file) -->
+
+<title>Audio Playlist</title>
 <style>
   :root{
     --bg:#0d0f14;
@@ -31,7 +43,8 @@
     background:var(--bg);
     display:flex;
     justify-content:center;
-    padding:28px 16px calc(48px + env(safe-area-inset-bottom));
+    /* extra top padding for black-translucent status bar in standalone */
+    padding: calc(28px + env(safe-area-inset-top)) 16px calc(48px + env(safe-area-inset-bottom));
     position:relative;
   }
   body.no-scroll{ overflow:hidden; }
@@ -184,7 +197,7 @@
     .vol input{ flex:1; width:auto; }
   }
 
-  /* -------- Playlist panel (main screen) -------- */
+  /* -------- Playlist panel -------- */
   .panel{
     margin-top:16px;
     background:rgba(22,25,34, var(--panel-alpha));
@@ -280,6 +293,7 @@
     transition:transform .28s cubic-bezier(.2,.8,.2,1);
     display:flex; flex-direction:column;
     box-shadow:-16px 0 40px rgba(0,0,0,.5);
+    padding-top:env(safe-area-inset-top);
     padding-bottom:env(safe-area-inset-bottom);
   }
   #sidebar.open{ transform:translateX(0); }
@@ -332,6 +346,53 @@
   .hint{ color:var(--muted); font-size:.76rem; }
   .hint-ios{ display:none; color:var(--muted); font-size:.74rem; margin-top:2px; }
   .ios .hint-ios{ display:block; }
+
+  /* -------- Install hint (iOS Safari only) -------- */
+  .install-hint{
+    position:fixed;
+    left:12px; right:12px;
+    bottom:calc(12px + env(safe-area-inset-bottom));
+    background:rgba(22,25,34,.97);
+    border:1px solid var(--line-hi);
+    border-radius:14px;
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    z-index:100;
+    box-shadow:0 8px 24px rgba(0,0,0,.55);
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+    animation:slideUp .3s ease;
+  }
+  .install-hint[hidden]{ display:none; }
+  .install-hint-text{ display:flex; flex-direction:column; gap:3px; font-size:.85rem; }
+  .install-hint-text strong{ font-size:.9rem; }
+  .install-hint-text small{ color:var(--muted); font-size:.78rem; }
+  .install-hint-text .share-icon{
+    display:inline-block;
+    padding:0 5px;
+    background:rgba(79,140,255,.18);
+    border-radius:4px;
+    color:var(--accent);
+    font-weight:600;
+    line-height:1.3;
+  }
+  .install-hint-close{
+    background:transparent; border:0;
+    color:var(--muted); cursor:pointer;
+    font-size:1rem; padding:8px;
+    border-radius:8px;
+    font-family:inherit;
+    flex:none;
+  }
+  .install-hint-close:hover{ color:var(--text); background:rgba(255,255,255,.06); }
+  @keyframes slideUp{
+    from{ transform:translateY(20px); opacity:0; }
+    to{ transform:translateY(0); opacity:1; }
+  }
+  body.standalone .install-hint{ display:none !important; }
 </style>
 </head>
 <body>
@@ -428,6 +489,15 @@
   </div>
 </aside>
 
+<!-- iOS install hint (shown once) -->
+<div id="installHint" class="install-hint" hidden>
+  <div class="install-hint-text">
+    <strong>Install for offline use</strong>
+    <small>Tap <span class="share-icon">⬆</span> Share → <em>Add to Home Screen</em></small>
+  </div>
+  <button id="dismissHint" class="install-hint-close" type="button" aria-label="Dismiss">✕</button>
+</div>
+
 <input id="bgInput" type="file" accept="image/*" hidden>
 <audio id="audio" preload="metadata" playsinline webkit-playsinline></audio>
 
@@ -463,7 +533,9 @@
     alpha:        document.getElementById('alpha'),
     alphaVal:     document.getElementById('alphaVal'),
     dim:          document.getElementById('dim'),
-    dimVal:       document.getElementById('dimVal')
+    dimVal:       document.getElementById('dimVal'),
+    installHint:  document.getElementById('installHint'),
+    dismissHint:  document.getElementById('dismissHint')
   };
 
   const AUDIO_EXT = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba|webm|aiff?|wma)$/i;
@@ -523,6 +595,16 @@
                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (IS_IOS) document.documentElement.classList.add('ios');
 
+  // iOS Safari specifically (not Chrome/Firefox/Edge on iOS)
+  const IS_SAFARI_IOS = IS_IOS &&
+    /Safari/.test(navigator.userAgent) &&
+    !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(navigator.userAgent);
+
+  const IS_STANDALONE =
+    window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  if (IS_STANDALONE) document.body.classList.add('standalone');
+
   let tracks = [];
   let current = -1;
   let loopMode = 'off';
@@ -531,6 +613,85 @@
   let bgUrl = null;
   let bgArtwork = [];
   let fallbackArtwork = [];
+
+  /* ------------------------------------------------------------------ */
+  /*  PWA: icon + manifest generation (self-contained single file)       */
+  /* ------------------------------------------------------------------ */
+
+  function generateIcon(size) {
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 0, size, size);
+    grad.addColorStop(0, '#4f8cff');
+    grad.addColorStop(1, '#8b5cff');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, size, size);
+    g.fillStyle = 'rgba(255,255,255,.96)';
+    g.font = `bold ${Math.round(size * 0.58)}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('♪', size / 2, size / 2 + size * 0.06);
+    return c.toDataURL('image/png');
+  }
+
+  function setupPWA() {
+    // Apple touch icons (iOS uses first matching size; include several)
+    [180, 167, 152, 120].forEach(size => {
+      const link = document.createElement('link');
+      link.rel = 'apple-touch-icon';
+      link.setAttribute('sizes', `${size}x${size}`);
+      link.href = generateIcon(size);
+      document.head.appendChild(link);
+    });
+
+    // Plain favicon
+    const fav = document.createElement('link');
+    fav.rel = 'icon';
+    fav.type = 'image/png';
+    fav.href = generateIcon(64);
+    document.head.appendChild(fav);
+
+    // Manifest — best-effort for Chrome/Android & newer iOS Safari.
+    // iOS primarily uses the Apple meta tags above for Add to Home Screen.
+    try {
+      const manifest = {
+        name: 'Audio Playlist',
+        short_name: 'Playlist',
+        description: 'Local audio playlist player — works offline.',
+        start_url: '.',
+        scope: './',
+        display: 'standalone',
+        orientation: 'portrait',
+        background_color: '#0d0f14',
+        theme_color: '#0d0f14',
+        icons: [
+          { src: generateIcon(192), sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: generateIcon(512), sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: generateIcon(512), sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = url;
+      document.head.appendChild(link);
+    } catch (e) { /* ignore */ }
+
+    // Show install hint once on iOS Safari, if not already installed/dismissed
+    try {
+      const dismissed = localStorage.getItem('installHintDismissed') === '1';
+      if (IS_SAFARI_IOS && !IS_STANDALONE && !dismissed) {
+        els.installHint.hidden = false;
+      }
+    } catch (e) { /* ignore */ }
+
+    els.dismissHint.addEventListener('click', () => {
+      els.installHint.hidden = true;
+      try { localStorage.setItem('installHintDismissed', '1'); } catch (e) {}
+    });
+  }
 
   function makeFallbackArtwork() {
     try {
@@ -1114,6 +1275,8 @@
   /* ------------------------------------------------------------------ */
   /*  Init                                                               */
   /* ------------------------------------------------------------------ */
+
+  setupPWA();
 
   els.audio.volume = 1;
   renderLoop();
