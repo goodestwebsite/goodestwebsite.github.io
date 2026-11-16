@@ -27,10 +27,16 @@
     min-height:100dvh;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color:var(--text);
-    background:
+    background-color:var(--bg);
+    background-image:
       radial-gradient(900px 500px at 10% -10%, rgba(79,140,255,.18), transparent 60%),
       radial-gradient(800px 500px at 110% 0%, rgba(139,92,255,.16), transparent 60%),
-      var(--bg);
+      linear-gradient(rgba(13,15,20,.55), rgba(13,15,20,.80)),
+      var(--bg-image, none);
+    background-size:auto, auto, cover, cover;
+    background-position:0 0, 0 0, center, center;
+    background-repeat:no-repeat;
+    background-attachment:scroll, scroll, fixed, fixed;
     display:flex;
     justify-content:center;
     padding:28px 16px calc(48px + env(safe-area-inset-bottom));
@@ -41,6 +47,8 @@
   h1{ font-size:1.55rem; margin:0 0 6px; letter-spacing:-.01em; }
   .sub{ margin:0 0 20px; color:var(--muted); font-size:.93rem; }
 
+  .bg-bar{ display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }
+
   /* ---------- Drop zone ---------- */
   .drop{
     display:flex;
@@ -50,7 +58,9 @@
     padding:26px 18px;
     border:2px dashed var(--line);
     border-radius:16px;
-    background:rgba(255,255,255,.02);
+    background:rgba(22,25,34,.72);
+    -webkit-backdrop-filter:blur(6px);
+    backdrop-filter:blur(6px);
     cursor:pointer;
     text-align:center;
     transition:border-color .18s, background .18s, transform .18s;
@@ -59,7 +69,7 @@
   }
   .drop:hover, .drop.over{
     border-color:var(--accent);
-    background:rgba(79,140,255,.08);
+    background:rgba(79,140,255,.12);
   }
   .drop.over{ transform:scale(1.01); }
   .drop-icon{ font-size:1.6rem; line-height:1; }
@@ -70,7 +80,9 @@
   /* ---------- Playlist panel ---------- */
   .panel{
     margin-top:20px;
-    background:var(--panel);
+    background:rgba(22,25,34,.88);
+    -webkit-backdrop-filter:blur(8px);
+    backdrop-filter:blur(8px);
     border:1px solid var(--line);
     border-radius:16px;
     overflow:hidden;
@@ -186,7 +198,9 @@
   /* ---------- Player ---------- */
   .player{
     margin-top:16px;
-    background:var(--panel);
+    background:rgba(22,25,34,.88);
+    -webkit-backdrop-filter:blur(8px);
+    backdrop-filter:blur(8px);
     border:1px solid var(--line);
     border-radius:16px;
     padding:16px;
@@ -314,6 +328,12 @@
     <p class="sub">Upload audio files, build a playlist, and loop it.</p>
   </header>
 
+  <div class="bg-bar">
+    <button id="bgBtn" class="ghost" type="button">🖼 Set background image</button>
+    <button id="bgClearBtn" class="ghost" type="button" hidden>✕ Remove background</button>
+  </div>
+  <input id="bgInput" type="file" accept="image/*" hidden>
+
   <label id="drop" class="drop" for="fileInput">
     <span class="drop-icon">⬆</span>
     <span><strong>Click to upload</strong> or drag &amp; drop audio files here</span>
@@ -321,15 +341,6 @@
     <span class="hint-ios">On iPhone: tap above, then tap <em>Select</em> in Files to pick multiple tracks.</span>
   </label>
 
-  <!--
-    IMPORTANT for iOS multi-select:
-    - `multiple` is present.
-    - `accept` lists explicit extensions (in addition to audio/*). On iOS Safari,
-      an accept value that contains file extensions routes the picker to the
-      "Files" browser, which supports multi-selection. With only `audio/*`,
-      iOS may open the single-item media picker instead.
-    - No `capture` attribute (capture forces the camera/mic and kills multi-select).
-  -->
   <input
     id="fileInput"
     type="file"
@@ -394,19 +405,26 @@
     prevBtn:   document.getElementById('prevBtn'),
     nextBtn:   document.getElementById('nextBtn'),
     loopBtn:   document.getElementById('loopBtn'),
-    volume:    document.getElementById('volume')
+    volume:    document.getElementById('volume'),
+    bgBtn:      document.getElementById('bgBtn'),
+    bgClearBtn: document.getElementById('bgClearBtn'),
+    bgInput:    document.getElementById('bgInput')
   };
 
   const AUDIO_EXT = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba|webm|aiff?|wma)$/i;
   const LOOP_LABELS = { off: 'Off', all: 'All', one: 'One' };
 
-    /* ---- IndexedDB persistence ---- */
-  const DB_NAME = 'audio-playlist', STORE = 'tracks';
+  /* ---- IndexedDB persistence ---- */
+  const DB_NAME = 'audio-playlist', STORE = 'tracks', SETTINGS = 'settings';
   let dbPromise = null;
   function db(){
     if (!dbPromise) dbPromise = new Promise((res, rej) => {
-      const r = indexedDB.open(DB_NAME, 1);
-      r.onupgradeneeded = () => r.result.createObjectStore(STORE, { keyPath:'key' });
+      const r = indexedDB.open(DB_NAME, 2);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        if (!d.objectStoreNames.contains(STORE))    d.createObjectStore(STORE, { keyPath:'key' });
+        if (!d.objectStoreNames.contains(SETTINGS)) d.createObjectStore(SETTINGS, { keyPath:'key' });
+      };
       r.onsuccess = () => res(r.result);
       r.onerror   = () => rej(r.error);
     });
@@ -431,17 +449,56 @@
     tx.objectStore(STORE).clear();
     tx.oncomplete = res; tx.onerror = () => rej(tx.error);
   })); }
+  function setGet(key){ return db().then(d => new Promise((res, rej) => {
+    const req = d.transaction(SETTINGS, 'readonly').objectStore(SETTINGS).get(key);
+    req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+  })); }
+  function setPut(rec){ return db().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(SETTINGS, 'readwrite');
+    tx.objectStore(SETTINGS).put(rec);
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  })); }
+  function setDelete(key){ return db().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(SETTINGS, 'readwrite');
+    tx.objectStore(SETTINGS).delete(key);
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  })); }
 
   // Detect iOS to show the extra hint (multi-select works in the Files app).
   const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (IS_IOS) document.documentElement.classList.add('ios');
 
-  /** @type {{id:number, name:string, url:string}[]} */
+  /** @type {{id:number, key:string, name:string, url:string}[]} */
   let tracks = [];
   let current = -1;
   let loopMode = 'off';          // 'off' | 'all' | 'one'
   let uid = 0;
+
+  /* ---- Background image state ---- */
+  let bgUrl = null;              // object URL applied to the CSS variable
+  let bgArtwork = [];            // Media Session artwork derived from bg
+  let fallbackArtwork = [];      // generated placeholder artwork
+
+  function makeFallbackArtwork() {
+    try {
+      const c = document.createElement('canvas');
+      c.width = c.height = 512;
+      const g = c.getContext('2d');
+      const grad = g.createLinearGradient(0, 0, 512, 512);
+      grad.addColorStop(0, '#4f8cff');
+      grad.addColorStop(1, '#8b5cff');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 512, 512);
+      g.fillStyle = 'rgba(255,255,255,.92)';
+      g.font = '260px system-ui, -apple-system, sans-serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText('♪', 256, 272);
+      fallbackArtwork = [{ src: c.toDataURL('image/png'), sizes: '512x512', type: 'image/png' }];
+    } catch (e) { fallbackArtwork = []; }
+  }
+  makeFallbackArtwork();
 
   /* ------------------------------------------------------------------ */
   /*  Helpers                                                            */
@@ -472,6 +529,128 @@
       document.title = 'Audio Playlist Player';
     }
     els.count.textContent = String(tracks.length);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Media Session (lock screen / Control Center / headset buttons)     */
+  /* ------------------------------------------------------------------ */
+
+  function updateMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+    const ms = navigator.mediaSession;
+
+    if (current < 0 || !tracks[current]) {
+      try { ms.metadata = null; } catch (e) {}
+      try { ms.playbackState = 'none'; } catch (e) {}
+      return;
+    }
+
+    const t = tracks[current];
+    const art = (bgArtwork && bgArtwork.length) ? bgArtwork : fallbackArtwork;
+
+    try {
+      if (typeof MediaMetadata !== 'undefined') {
+        ms.metadata = new MediaMetadata({
+          title: t.name,
+          artist: 'Audio Playlist',
+          album: tracks.length + ' track' + (tracks.length === 1 ? '' : 's'),
+          artwork: art
+        });
+      }
+    } catch (e) {}
+
+    try {
+      ms.playbackState = els.audio.paused ? 'paused' : 'playing';
+    } catch (e) {}
+  }
+
+  function updatePositionState() {
+    if (!('mediaSession' in navigator)) return;
+    if (typeof navigator.mediaSession.setPositionState !== 'function') return;
+    const d = els.audio.duration;
+    if (!isFinite(d) || d <= 0) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: d,
+        playbackRate: els.audio.playbackRate || 1,
+        position: Math.min(d, Math.max(0, els.audio.currentTime || 0))
+      });
+    } catch (e) {}
+  }
+
+  function initMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+    const ms = navigator.mediaSession;
+    const safe = (action, fn) => { try { ms.setActionHandler(action, fn); } catch (e) {} };
+
+    safe('play', () => {
+      if (current === -1) { playTrack(0); return; }
+      const p = els.audio.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    });
+    safe('pause', () => els.audio.pause());
+    safe('previoustrack', () => prevTrack());
+    safe('nexttrack', () => nextTrack(false));
+    safe('seekbackward', (d) => seekBy(-((d && d.seekOffset) || 10)));
+    safe('seekforward',  (d) => seekBy(  (d && d.seekOffset) || 10));
+    safe('seekto', (d) => {
+      if (!d || typeof d.seekTime !== 'number') return;
+      try { els.audio.currentTime = d.seekTime; } catch (e) {}
+      updatePositionState();
+    });
+    safe('stop', () => {
+      els.audio.pause();
+      try { els.audio.currentTime = 0; } catch (e) {}
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Background image                                                   */
+  /* ------------------------------------------------------------------ */
+
+  function blobToArtwork(blob) {
+    return new Promise((resolve) => {
+      let url = null;
+      try {
+        url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const c = document.createElement('canvas');
+            c.width = c.height = 512;
+            const g = c.getContext('2d');
+            const s = Math.min(img.naturalWidth || img.width, img.naturalHeight || img.height);
+            const sx = ((img.naturalWidth  || img.width)  - s) / 2;
+            const sy = ((img.naturalHeight || img.height) - s) / 2;
+            g.drawImage(img, sx, sy, s, s, 0, 0, 512, 512);
+            resolve([{ src: c.toDataURL('image/png'), sizes: '512x512', type: 'image/png' }]);
+          } catch (e) { resolve([]); }
+          if (url) URL.revokeObjectURL(url);
+        };
+        img.onerror = () => { if (url) URL.revokeObjectURL(url); resolve([]); };
+        img.src = url;
+      } catch (e) { if (url) URL.revokeObjectURL(url); resolve([]); }
+    });
+  }
+
+  async function applyBackground(blob) {
+    if (bgUrl) { URL.revokeObjectURL(bgUrl); bgUrl = null; }
+
+    if (!blob) {
+      document.documentElement.style.removeProperty('--bg-image');
+      els.bgClearBtn.hidden = true;
+      bgArtwork = [];
+      updateMediaSession();
+      return;
+    }
+
+    bgUrl = URL.createObjectURL(blob);
+    document.documentElement.style.setProperty('--bg-image', `url("${bgUrl}")`);
+    els.bgClearBtn.hidden = false;
+
+    // Downscale to a 512×512 data URL for lock-screen artwork.
+    bgArtwork = await blobToArtwork(blob);
+    updateMediaSession();
   }
 
   /* ------------------------------------------------------------------ */
@@ -531,11 +710,6 @@
   /*  Playlist management                                                */
   /* ------------------------------------------------------------------ */
 
-  /**
-   * Accepts a FileList (from an <input multiple> or a drop event).
-   * On iOS, a multi-selection from the Files app arrives here as a
-   * FileList containing every chosen file, so no extra work is needed.
-   */
   function addFiles(fileList) {
     if (!fileList || !fileList.length) return;
 
@@ -560,7 +734,6 @@
       tracks.push({ id, key, name, url: URL.createObjectURL(file) });
       added++;
       dbPut({ key, name, blob: file, ts: Date.now() + id }).catch(() => {});
-      added++;
     });
 
     if (!added) return;
@@ -574,10 +747,10 @@
   function removeTrack(index) {
     if (index < 0 || index >= tracks.length) return;
 
-      const wasCurrent = index === current;
-      dbDelete(tracks[index].key).catch(() => {});   // <-- add
-      URL.revokeObjectURL(tracks[index].url);
-      tracks.splice(index, 1);
+    const wasCurrent = index === current;
+    dbDelete(tracks[index].key).catch(() => {});
+    URL.revokeObjectURL(tracks[index].url);
+    tracks.splice(index, 1);
 
     if (!tracks.length) {
       current = -1;
@@ -589,6 +762,7 @@
       els.durTime.textContent = '0:00';
       setPlayIcon(false);
       render();
+      updateMediaSession();
       return;
     }
 
@@ -601,6 +775,7 @@
     }
 
     render();
+    updateMediaSession();
   }
 
   function clearAll() {
@@ -617,6 +792,7 @@
     els.durTime.textContent = '0:00';
     setPlayIcon(false);
     render();
+    updateMediaSession();
   }
 
   /* ------------------------------------------------------------------ */
@@ -640,6 +816,8 @@
     els.curTime.textContent = '0:00';
     els.durTime.textContent = '0:00';
     render();
+    updateMediaSession();
+    updatePositionState();
   }
 
   function togglePlay() {
@@ -663,14 +841,10 @@
       return;
     }
 
-    // We're on the last track.
-    if (loopMode === 'all' || !auto) {
-      // Manual "next" or repeat-all → wrap to the beginning and play.
-      playTrack(0);
-    } else {
-+     // End of playlist with repeat OFF: go back to the first track and play.
-+     playTrack(0);
-    }
+    // We're on the last track: wrap to the first track and play.
+    // (Covers both manual "next" and repeat-all, and the end-of-list case
+    //  with repeat OFF — playback restarts from the front.)
+    playTrack(0);
   }
 
   function prevTrack() {
@@ -705,6 +879,20 @@
   els.fileInput.addEventListener('change', e => {
     addFiles(e.target.files);
     e.target.value = ''; // allow re-adding the same file(s)
+  });
+
+  // Background image upload
+  els.bgBtn.addEventListener('click', () => els.bgInput.click());
+  els.bgInput.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !file.type || !file.type.startsWith('image/')) return;
+    await applyBackground(file);
+    try { await setPut({ key: 'background', blob: file, type: file.type }); } catch (err) {}
+  });
+  els.bgClearBtn.addEventListener('click', async () => {
+    await applyBackground(null);
+    try { await setDelete('background'); } catch (err) {}
   });
 
   // Drag & drop (desktop; iPadOS also supports it in some cases)
@@ -755,12 +943,23 @@
   });
 
   // Audio element events
-  els.audio.addEventListener('play',  () => setPlayIcon(true));
-  els.audio.addEventListener('pause', () => setPlayIcon(false));
+  els.audio.addEventListener('play', () => {
+    setPlayIcon(true);
+    if ('mediaSession' in navigator) {
+      try { navigator.mediaSession.playbackState = 'playing'; } catch (e) {}
+    }
+  });
+  els.audio.addEventListener('pause', () => {
+    setPlayIcon(false);
+    if ('mediaSession' in navigator && current >= 0) {
+      try { navigator.mediaSession.playbackState = 'paused'; } catch (e) {}
+    }
+  });
 
   els.audio.addEventListener('loadedmetadata', () => {
     els.durTime.textContent = fmt(els.audio.duration);
     els.seek.value = 0;
+    updatePositionState();
   });
 
   els.audio.addEventListener('timeupdate', () => {
@@ -770,6 +969,7 @@
       els.durTime.textContent = fmt(d);
     }
     els.curTime.textContent = fmt(els.audio.currentTime);
+    updatePositionState();
   });
 
   els.audio.addEventListener('ended', () => {
@@ -796,6 +996,7 @@
     if (!isFinite(d) || d <= 0) return;
     els.audio.currentTime = (Number(els.seek.value) / 1000) * d;
     els.curTime.textContent = fmt(els.audio.currentTime);
+    updatePositionState();
   });
 
   // Volume
@@ -829,21 +1030,31 @@
   renderLoop();
   render();
   setPlayIcon(false);
-    // Restore previously saved playlist from IndexedDB
+  initMediaSession();
+  updateMediaSession();
+
   (async () => {
+    // Restore playlist
     try {
       const recs = await dbAll();
-      if (!recs.length) return;
-      recs.sort((a, b) => (a.ts || 0) - (b.ts || 0));
-      recs.forEach(r => tracks.push({
-        id: ++uid,
-        key: r.key,
-        name: r.name,
-        url: URL.createObjectURL(r.blob)
-      }));
-      render();
-      playTrack(0, false);   // load first track, paused
+      if (recs.length) {
+        recs.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+        recs.forEach(r => tracks.push({
+          id: ++uid,
+          key: r.key,
+          name: r.name,
+          url: URL.createObjectURL(r.blob)
+        }));
+        render();
+        playTrack(0, false);   // load first track, paused
+      }
     } catch (e) { /* storage unavailable — ignore */ }
+
+    // Restore background image
+    try {
+      const bg = await setGet('background');
+      if (bg && bg.blob) await applyBackground(bg.blob);
+    } catch (e) { /* ignore */ }
   })();
 })();
 </script>
