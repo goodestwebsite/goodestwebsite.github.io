@@ -15,7 +15,7 @@
 <meta name="color-scheme" content="dark">
 <!-- manifest + apple-touch-icon are injected by JS (self-contained file) -->
 
-<title>Audio Playlist</title>
+<title>Audio Playlist Player</title>
 <style>
   :root{
     --bg:#0d0f14;
@@ -43,7 +43,6 @@
     background:var(--bg);
     display:flex;
     justify-content:center;
-    /* extra top padding for black-translucent status bar in standalone */
     padding: calc(28px + env(safe-area-inset-top)) 16px calc(48px + env(safe-area-inset-bottom));
     position:relative;
   }
@@ -83,7 +82,6 @@
   h1{ font-size:1.55rem; margin:0 0 4px; letter-spacing:-.01em; }
   .sub{ margin:0; color:var(--muted); font-size:.93rem; }
 
-  /* Hide everything except the play bar */
   body.minimal .topbar{ display:none; }
   body.minimal .playlist-panel{ display:none; }
 
@@ -328,6 +326,10 @@
     font-variant-numeric:tabular-nums; font-size:.8rem;
   }
 
+  .sidebar-hint{
+    color:var(--muted); font-size:.75rem; margin:4px 0 2px; line-height:1.35;
+  }
+
   /* -------- Drop zone -------- */
   .drop{
     display:flex; flex-direction:column; align-items:center; gap:6px;
@@ -405,7 +407,6 @@
     <!-- <p class="sub">Tap ▶ to play · ⚙ for settings · ▴ to hide everything except the play bar</p> -->
   </header>
 
-  <!-- Main play bar -->
   <section class="player">
     <div class="player-corner">
       <button id="settingsBtn" class="icon-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
@@ -437,7 +438,6 @@
     </div>
   </section>
 
-  <!-- Playlist -->
   <section class="panel playlist-panel">
     <div class="panel-head">
       <h2>Playlist <span id="count" class="count">0</span></h2>
@@ -447,7 +447,6 @@
   </section>
 </div>
 
-<!-- Scrim + settings sidebar -->
 <div id="scrim"></div>
 
 <aside id="sidebar" aria-label="Settings" aria-hidden="true">
@@ -457,7 +456,14 @@
   </div>
 
   <div class="sidebar-body">
-    <h3>Appearance</h3>
+    <h3>Home screen icon</h3>
+    <div class="row-between" style="flex-wrap:wrap">
+      <button id="iconBtn" class="ghost" type="button">🎨 Set icon</button>
+      <button id="iconClearBtn" class="ghost" type="button" hidden>✕ Reset icon</button>
+    </div>
+    <p class="sidebar-hint">Used when you “Add to Home Screen”. On iOS, remove and re-add the icon after changing.</p>
+
+    <h3>Background</h3>
     <div class="row-between" style="flex-wrap:wrap">
       <button id="bgBtn" class="ghost" type="button">🖼 Set background image</button>
       <button id="bgClearBtn" class="ghost" type="button" hidden>✕ Remove background</button>
@@ -472,6 +478,13 @@
       <input id="alpha" type="range" min="0" max="80" step="1" value="10">
       <span id="alphaVal">10%</span>
     </label>
+
+    <h3>Lock screen image</h3>
+    <div class="row-between" style="flex-wrap:wrap">
+      <button id="lockBtn" class="ghost" type="button">🔒 Set lock screen image</button>
+      <button id="lockClearBtn" class="ghost" type="button" hidden>✕ Remove</button>
+    </div>
+    <p class="sidebar-hint">Shown as artwork on the iPhone lock screen / Control Center while playing. Falls back to the background image.</p>
 
     <h3>Upload songs</h3>
     <label id="drop" class="drop" for="fileInput">
@@ -489,7 +502,6 @@
   </div>
 </aside>
 
-<!-- iOS install hint (shown once) -->
 <div id="installHint" class="install-hint" hidden>
   <div class="install-hint-text">
     <strong>Install for offline use</strong>
@@ -499,6 +511,8 @@
 </div>
 
 <input id="bgInput" type="file" accept="image/*" hidden>
+<input id="lockInput" type="file" accept="image/*" hidden>
+<input id="iconInput" type="file" accept="image/*" hidden>
 <audio id="audio" preload="metadata" playsinline webkit-playsinline></audio>
 
 <script>
@@ -525,6 +539,12 @@
     bgBtn:        document.getElementById('bgBtn'),
     bgClearBtn:   document.getElementById('bgClearBtn'),
     bgInput:      document.getElementById('bgInput'),
+    lockBtn:      document.getElementById('lockBtn'),
+    lockClearBtn: document.getElementById('lockClearBtn'),
+    lockInput:    document.getElementById('lockInput'),
+    iconBtn:      document.getElementById('iconBtn'),
+    iconClearBtn: document.getElementById('iconClearBtn'),
+    iconInput:    document.getElementById('iconInput'),
     settingsBtn:  document.getElementById('settingsBtn'),
     hideBtn:      document.getElementById('hideBtn'),
     closeSidebar: document.getElementById('closeSidebar'),
@@ -595,7 +615,6 @@
                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (IS_IOS) document.documentElement.classList.add('ios');
 
-  // iOS Safari specifically (not Chrome/Firefox/Edge on iOS)
   const IS_SAFARI_IOS = IS_IOS &&
     /Safari/.test(navigator.userAgent) &&
     !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(navigator.userAgent);
@@ -612,10 +631,13 @@
 
   let bgUrl = null;
   let bgArtwork = [];
+  let lockArtwork = [];
   let fallbackArtwork = [];
+  let customIconDataUrl = null;   // user-uploaded, 512×512 PNG data URL
+  let manifestUrl = null;
 
   /* ------------------------------------------------------------------ */
-  /*  PWA: icon + manifest generation (self-contained single file)       */
+  /*  PWA: icons + manifest                                              */
   /* ------------------------------------------------------------------ */
 
   function generateIcon(size) {
@@ -635,25 +657,34 @@
     return c.toDataURL('image/png');
   }
 
-  function setupPWA() {
-    // Apple touch icons (iOS uses first matching size; include several)
+  function iconDataUrlFor(size) {
+    return customIconDataUrl || generateIcon(size);
+  }
+
+  function installIconLinks() {
+    document.querySelectorAll('link[rel="apple-touch-icon"], link[rel="icon"]').forEach(l => l.remove());
+
     [180, 167, 152, 120].forEach(size => {
       const link = document.createElement('link');
       link.rel = 'apple-touch-icon';
       link.setAttribute('sizes', `${size}x${size}`);
-      link.href = generateIcon(size);
+      // For custom icons use the same 512 source; iOS scales fine.
+      link.href = customIconDataUrl || generateIcon(size);
       document.head.appendChild(link);
     });
 
-    // Plain favicon
     const fav = document.createElement('link');
     fav.rel = 'icon';
     fav.type = 'image/png';
-    fav.href = generateIcon(64);
+    fav.href = iconDataUrlFor(64);
     document.head.appendChild(fav);
+  }
 
-    // Manifest — best-effort for Chrome/Android & newer iOS Safari.
-    // iOS primarily uses the Apple meta tags above for Add to Home Screen.
+  function installManifest() {
+    if (manifestUrl) { try { URL.revokeObjectURL(manifestUrl); } catch (e) {} manifestUrl = null; }
+    const old = document.querySelector('link[rel="manifest"]');
+    if (old) old.remove();
+
     try {
       const manifest = {
         name: 'Audio Playlist',
@@ -666,20 +697,28 @@
         background_color: '#0d0f14',
         theme_color: '#0d0f14',
         icons: [
-          { src: generateIcon(192), sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: generateIcon(512), sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: generateIcon(512), sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+          { src: iconDataUrlFor(192), sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: iconDataUrlFor(512), sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: iconDataUrlFor(512), sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       };
       const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-      const url = URL.createObjectURL(blob);
+      manifestUrl = URL.createObjectURL(blob);
       const link = document.createElement('link');
       link.rel = 'manifest';
-      link.href = url;
+      link.href = manifestUrl;
       document.head.appendChild(link);
     } catch (e) { /* ignore */ }
+  }
 
-    // Show install hint once on iOS Safari, if not already installed/dismissed
+  function rebuildIconAssets() {
+    installIconLinks();
+    installManifest();
+  }
+
+  function setupPWA() {
+    rebuildIconAssets();
+
     try {
       const dismissed = localStorage.getItem('installHintDismissed') === '1';
       if (IS_SAFARI_IOS && !IS_STANDALONE && !dismissed) {
@@ -775,6 +814,12 @@
   /*  Media Session                                                      */
   /* ------------------------------------------------------------------ */
 
+  function pickArtwork() {
+    if (lockArtwork && lockArtwork.length) return lockArtwork;
+    if (bgArtwork && bgArtwork.length)     return bgArtwork;
+    return fallbackArtwork;
+  }
+
   function updateMediaSession() {
     if (!('mediaSession' in navigator)) return;
     const ms = navigator.mediaSession;
@@ -784,14 +829,13 @@
       return;
     }
     const t = tracks[current];
-    const art = (bgArtwork && bgArtwork.length) ? bgArtwork : fallbackArtwork;
     try {
       if (typeof MediaMetadata !== 'undefined') {
         ms.metadata = new MediaMetadata({
           title: t.name,
           artist: 'Audio Playlist',
           album: tracks.length + ' track' + (tracks.length === 1 ? '' : 's'),
-          artwork: art
+          artwork: pickArtwork()
         });
       }
     } catch (e) {}
@@ -839,9 +883,10 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /*  Background, dim & transparency                                     */
+  /*  Image → artwork helpers                                            */
   /* ------------------------------------------------------------------ */
 
+  // Square crop → multi-size JPEGs for the lock screen
   function blobToArtwork(blob) {
     return new Promise((resolve) => {
       let url = null;
@@ -872,6 +917,41 @@
     });
   }
 
+  // Square crop → single PNG data URL (used for the home-screen icon)
+  function blobToIconDataUrl(blob, size) {
+    return new Promise((resolve) => {
+      let url = null;
+      try {
+        url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const iw = img.naturalWidth  || img.width;
+            const ih = img.naturalHeight || img.height;
+            const sMin = Math.min(iw, ih);
+            const sx = (iw - sMin) / 2;
+            const sy = (ih - sMin) / 2;
+            const c = document.createElement('canvas');
+            c.width = c.height = size;
+            const g = c.getContext('2d');
+            // iOS fills transparent icon pixels with black; pre-fill instead.
+            g.fillStyle = '#0d0f14';
+            g.fillRect(0, 0, size, size);
+            g.drawImage(img, sx, sy, sMin, sMin, 0, 0, size, size);
+            resolve(c.toDataURL('image/png'));
+          } catch (e) { resolve(null); }
+          if (url) URL.revokeObjectURL(url);
+        };
+        img.onerror = () => { if (url) URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
+      } catch (e) { if (url) URL.revokeObjectURL(url); resolve(null); }
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Background / lock screen / icon state                              */
+  /* ------------------------------------------------------------------ */
+
   async function applyBackground(blob) {
     if (bgUrl) { URL.revokeObjectURL(bgUrl); bgUrl = null; }
     if (!blob) {
@@ -886,6 +966,32 @@
     els.bgClearBtn.hidden = false;
     bgArtwork = await blobToArtwork(blob);
     updateMediaSession();
+  }
+
+  async function applyLockImage(blob) {
+    if (!blob) {
+      lockArtwork = [];
+      els.lockClearBtn.hidden = true;
+      updateMediaSession();
+      return;
+    }
+    lockArtwork = await blobToArtwork(blob);
+    els.lockClearBtn.hidden = false;
+    updateMediaSession();
+  }
+
+  async function applyIcon(blob) {
+    if (!blob) {
+      customIconDataUrl = null;
+      els.iconClearBtn.hidden = true;
+      rebuildIconAssets();
+      return;
+    }
+    const dataUrl = await blobToIconDataUrl(blob, 512);
+    if (!dataUrl) return;
+    customIconDataUrl = dataUrl;
+    els.iconClearBtn.hidden = false;
+    rebuildIconAssets();
   }
 
   function applyAlpha(transparencyPct) {
@@ -1102,7 +1208,6 @@
   /*  Events                                                             */
   /* ------------------------------------------------------------------ */
 
-  // Sidebar
   els.settingsBtn.addEventListener('click', openSidebar);
   els.closeSidebar.addEventListener('click', closeSidebar);
   els.scrim.addEventListener('click', closeSidebar);
@@ -1110,12 +1215,10 @@
     if (e.key === 'Escape' && els.sidebar.classList.contains('open')) closeSidebar();
   });
 
-  // Hide/show everything except the play bar
   els.hideBtn.addEventListener('click', () => {
     setMinimal(!document.body.classList.contains('minimal'));
   });
 
-  // File picker
   els.fileInput.addEventListener('change', e => {
     addFiles(e.target.files);
     e.target.value = '';
@@ -1133,6 +1236,34 @@
   els.bgClearBtn.addEventListener('click', async () => {
     await applyBackground(null);
     try { await setDelete('background'); } catch (err) {}
+  });
+
+  // Lock-screen image
+  els.lockBtn.addEventListener('click', () => els.lockInput.click());
+  els.lockInput.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !file.type || !file.type.startsWith('image/')) return;
+    await applyLockImage(file);
+    try { await setPut({ key: 'lockscreen', blob: file, type: file.type }); } catch (err) {}
+  });
+  els.lockClearBtn.addEventListener('click', async () => {
+    await applyLockImage(null);
+    try { await setDelete('lockscreen'); } catch (err) {}
+  });
+
+  // Home-screen icon
+  els.iconBtn.addEventListener('click', () => els.iconInput.click());
+  els.iconInput.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !file.type || !file.type.startsWith('image/')) return;
+    await applyIcon(file);
+    try { await setPut({ key: 'icon', blob: file, type: file.type }); } catch (err) {}
+  });
+  els.iconClearBtn.addEventListener('click', async () => {
+    await applyIcon(null);
+    try { await setDelete('icon'); } catch (err) {}
   });
 
   // Dim slider
@@ -1176,7 +1307,6 @@
   window.addEventListener('dragover', e => e.preventDefault());
   window.addEventListener('drop', e => e.preventDefault());
 
-  // Playlist interactions
   els.playlist.addEventListener('click', e => {
     const li = e.target.closest('.track');
     if (!li) return;
@@ -1196,7 +1326,6 @@
     renderLoop();
   });
 
-  // Audio events
   els.audio.addEventListener('play', () => {
     setPlayIcon(true);
     if ('mediaSession' in navigator) {
@@ -1289,6 +1418,12 @@
   applyDim(Number(els.dim.value));
 
   (async () => {
+    // Icon first — cheap and used immediately by PWA
+    try {
+      const ic = await setGet('icon');
+      if (ic && ic.blob) await applyIcon(ic.blob);
+    } catch (e) {}
+
     try {
       const recs = await dbAll();
       if (recs.length) {
@@ -1304,6 +1439,11 @@
     try {
       const bg = await setGet('background');
       if (bg && bg.blob) await applyBackground(bg.blob);
+    } catch (e) {}
+
+    try {
+      const lk = await setGet('lockscreen');
+      if (lk && lk.blob) await applyLockImage(lk.blob);
     } catch (e) {}
 
     try {
