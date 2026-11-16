@@ -415,7 +415,7 @@
 
     <div class="now">
       <div id="nowTitle" class="now-title">No track selected</div>
-      <div id="nowSub" class="now-sub">Open settings to add audio files</div>
+      <!-- <div id="nowSub" class="now-sub">Open settings to add audio files</div> -->
     </div>
 
     <div class="progress-row">
@@ -1019,7 +1019,7 @@
     if (!tracks.length) {
       const li = document.createElement('li');
       li.className = 'empty';
-      li.textContent = 'No tracks yet — open settings to upload audio files.';
+      li.textContent = 'No tracks yet';
       els.playlist.appendChild(li);
     } else {
       const frag = document.createDocumentFragment();
