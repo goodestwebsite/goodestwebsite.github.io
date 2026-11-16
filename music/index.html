@@ -15,207 +15,116 @@
     --muted:#8a93a8;
     --accent:#4f8cff;
     --accent-2:#8b5cff;
+    --panel-alpha: 0.90;   /* 1 = opaque, 0 = fully see-through */
+    --bg-dim: 0.65;        /* 0 = no dim, 1 = fully black */
   }
 
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
   html{ -webkit-text-size-adjust:100%; }
+  html, body{ margin:0; }
 
   body{
-    margin:0;
     min-height:100vh;
     min-height:100dvh;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color:var(--text);
-    background-color:var(--bg);
-    background-image:
-      radial-gradient(900px 500px at 10% -10%, rgba(79,140,255,.18), transparent 60%),
-      radial-gradient(800px 500px at 110% 0%, rgba(139,92,255,.16), transparent 60%),
-      linear-gradient(rgba(13,15,20,.55), rgba(13,15,20,.80)),
-      var(--bg-image, none);
-    background-size:auto, auto, cover, cover;
-    background-position:0 0, 0 0, center, center;
-    background-repeat:no-repeat;
-    background-attachment:scroll, scroll, fixed, fixed;
+    background:var(--bg);
     display:flex;
     justify-content:center;
     padding:28px 16px calc(48px + env(safe-area-inset-bottom));
+    position:relative;
+  }
+  body.no-scroll{ overflow:hidden; }
+
+  /* -------- Fixed, non-scrolling background -------- */
+  #bg{
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    background-color:var(--bg);
+    background-image:var(--bg-image, none);
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    pointer-events:none;
+  }
+  #bg::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(900px 500px at 10% -10%, rgba(79,140,255,.18), transparent 60%),
+      radial-gradient(800px 500px at 110% 0%, rgba(139,92,255,.16), transparent 60%);
+    pointer-events:none;
+  }
+  #bg::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(
+      rgb(13 15 20 / calc(var(--bg-dim) * 0.85)),
+      rgb(13 15 20 / var(--bg-dim))
+    );
+    pointer-events:none;
+    transition:background .18s ease;
   }
 
-  .app{ width:100%; max-width:800px; }
-
-  h1{ font-size:1.55rem; margin:0 0 6px; letter-spacing:-.01em; }
-  .sub{ margin:0 0 20px; color:var(--muted); font-size:.93rem; }
-
-  .bg-bar{ display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }
-
-  /* ---------- Drop zone ---------- */
-  .drop{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:6px;
-    padding:26px 18px;
-    border:2px dashed var(--line);
-    border-radius:16px;
-    background:rgba(22,25,34,.72);
-    -webkit-backdrop-filter:blur(6px);
-    backdrop-filter:blur(6px);
-    cursor:pointer;
-    text-align:center;
-    transition:border-color .18s, background .18s, transform .18s;
-    user-select:none;
-    -webkit-user-select:none;
+  .app{
+    width:100%;
+    max-width:800px;
+    position:relative;
+    z-index:1;
   }
-  .drop:hover, .drop.over{
-    border-color:var(--accent);
-    background:rgba(79,140,255,.12);
-  }
-  .drop.over{ transform:scale(1.01); }
-  .drop-icon{ font-size:1.6rem; line-height:1; }
-  .hint{ color:var(--muted); font-size:.78rem; }
-  .hint-ios{ display:none; color:var(--muted); font-size:.75rem; margin-top:2px; }
-  .ios .hint-ios{ display:block; }
 
-  /* ---------- Playlist panel ---------- */
-  .panel{
-    margin-top:20px;
-    background:rgba(22,25,34,.88);
-    -webkit-backdrop-filter:blur(8px);
-    backdrop-filter:blur(8px);
-    border:1px solid var(--line);
-    border-radius:16px;
-    overflow:hidden;
-  }
-  .panel-head{
+  /* -------- Top bar -------- */
+  .topbar{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:13px 16px;
-    border-bottom:1px solid var(--line);
+    gap:12px;
+    margin-bottom:20px;
   }
-  .panel-head h2{
-    margin:0;
-    font-size:1rem;
-    font-weight:600;
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-  .count{
-    background:var(--panel-2);
-    color:var(--muted);
-    font-size:.75rem;
-    padding:2px 9px;
-    border-radius:999px;
-    font-variant-numeric:tabular-nums;
-  }
-  .ghost{
-    background:transparent;
-    border:1px solid var(--line);
-    color:var(--muted);
-    padding:6px 11px;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:.8rem;
-    font-family:inherit;
-    transition:.15s;
-  }
-  .ghost:hover{ color:var(--text); border-color:var(--line-hi); }
+  h1{ font-size:1.55rem; margin:0 0 4px; letter-spacing:-.01em; }
+  .sub{ margin:0; color:var(--muted); font-size:.93rem; }
 
-  .playlist{
-    list-style:none;
-    margin:0;
-    padding:6px;
-    max-height:320px;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-  }
-  .playlist::-webkit-scrollbar{ width:10px; }
-  .playlist::-webkit-scrollbar-thumb{
-    background:var(--line);
-    border-radius:999px;
-    border:3px solid var(--panel);
-  }
-
-  .track{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:10px 12px;
-    border-radius:10px;
-    cursor:pointer;
-    transition:background .15s;
-  }
-  .track:hover{ background:var(--panel-2); }
-  .track.active{
-    background:linear-gradient(90deg, rgba(79,140,255,.20), rgba(139,92,255,.12));
-  }
-  .track .idx{
-    width:22px;
-    text-align:center;
-    color:var(--muted);
-    font-size:.8rem;
-    font-variant-numeric:tabular-nums;
-    flex:none;
-  }
-  .track.active .idx{ color:var(--accent); }
-  .track .name{
-    flex:1;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    font-size:.94rem;
-  }
-  .track.active .name{ font-weight:600; }
-  .track .remove{
-    background:transparent;
-    border:0;
-    color:var(--muted);
-    cursor:pointer;
-    font-size:.95rem;
-    padding:6px 9px;
-    border-radius:8px;
-    opacity:.55;
-    flex:none;
-    transition:.15s;
-    font-family:inherit;
-    line-height:1;
-  }
-  .track .remove:hover{
-    color:#ff6b6b;
-    background:rgba(255,107,107,.14);
-    opacity:1;
-  }
-
-  .empty{
-    padding:26px 16px;
-    text-align:center;
-    color:var(--muted);
-    font-size:.9rem;
-  }
-
-  /* ---------- Player ---------- */
-  .player{
-    margin-top:16px;
-    background:rgba(22,25,34,.88);
+  .icon-btn{
+    background:rgba(22,25,34,.72);
     -webkit-backdrop-filter:blur(8px);
     backdrop-filter:blur(8px);
     border:1px solid var(--line);
+    color:var(--text);
+    width:44px; height:44px;
+    border-radius:12px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.15rem;
+    cursor:pointer;
+    transition:.15s;
+    flex:none;
+    padding:0;
+    font-family:inherit;
+  }
+  .icon-btn:hover{ background:rgba(35,42,58,.85); border-color:var(--line-hi); }
+
+  /* -------- Player (main screen) -------- */
+  .player{
+    background:rgba(22,25,34, var(--panel-alpha));
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+    border:1px solid var(--line);
     border-radius:16px;
     padding:16px;
+    transition:background-color .18s ease;
   }
+
   .now-title{
     font-weight:600;
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
   }
-  .now-sub{
-    color:var(--muted);
-    font-size:.8rem;
-    margin-top:3px;
-  }
+  .now-sub{ color:var(--muted); font-size:.8rem; margin-top:3px; }
 
   .progress-row{
     display:flex;
@@ -318,48 +227,230 @@
     .vol{ margin-left:0; width:100%; }
     .vol input{ flex:1; width:auto; }
   }
+
+  /* -------- Sidebar / drawer -------- */
+  #scrim{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.55);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease;
+    z-index:40;
+  }
+  #scrim.show{ opacity:1; pointer-events:auto; }
+
+  #sidebar{
+    position:fixed;
+    top:0; right:0;
+    height:100vh;
+    height:100dvh;
+    width:min(420px, 92vw);
+    background:rgba(16,18,26,.96);
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
+    border-left:1px solid var(--line);
+    z-index:50;
+    transform:translateX(100%);
+    transition:transform .28s cubic-bezier(.2,.8,.2,1);
+    display:flex;
+    flex-direction:column;
+    box-shadow:-16px 0 40px rgba(0,0,0,.5);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  #sidebar.open{ transform:translateX(0); }
+
+  .sidebar-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px;
+    border-bottom:1px solid var(--line);
+    flex:none;
+  }
+  .sidebar-head h2{ margin:0; font-size:1rem; font-weight:600; }
+
+  .sidebar-body{
+    padding:16px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .sidebar-body h3{
+    margin:14px 0 2px;
+    font-size:.78rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .sidebar-body h3:first-child{ margin-top:0; }
+
+  .row-between{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+
+  /* -------- Setting rows -------- */
+  .setting-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:6px 0;
+    font-size:.88rem;
+  }
+  .setting-row > span:first-child{ flex:1; }
+  .setting-row input[type="range"]{ flex:1.2; }
+  #alphaVal, #dimVal{
+    min-width:40px;
+    text-align:right;
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+    font-size:.8rem;
+  }
+
+  /* -------- Upload drop zone -------- */
+  .drop{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    padding:22px 16px;
+    border:2px dashed var(--line);
+    border-radius:14px;
+    background:rgba(255,255,255,.03);
+    cursor:pointer;
+    text-align:center;
+    transition:border-color .18s, background .18s, transform .18s;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  .drop:hover, .drop.over{
+    border-color:var(--accent);
+    background:rgba(79,140,255,.10);
+  }
+  .drop.over{ transform:scale(1.01); }
+  .drop-icon{ font-size:1.5rem; line-height:1; }
+  .hint{ color:var(--muted); font-size:.76rem; }
+  .hint-ios{ display:none; color:var(--muted); font-size:.74rem; margin-top:2px; }
+  .ios .hint-ios{ display:block; }
+
+  /* -------- Ghost buttons -------- */
+  .ghost{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--muted);
+    padding:7px 11px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:.8rem;
+    font-family:inherit;
+    transition:.15s;
+  }
+  .ghost:hover{ color:var(--text); border-color:var(--line-hi); }
+
+  .count{
+    background:var(--panel-2);
+    color:var(--muted);
+    font-size:.72rem;
+    padding:2px 8px;
+    border-radius:999px;
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* -------- Playlist -------- */
+  .playlist{
+    list-style:none;
+    margin:4px 0 0;
+    padding:6px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:rgba(0,0,0,.20);
+  }
+  .track{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 10px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .track:hover{ background:rgba(255,255,255,.04); }
+  .track.active{
+    background:linear-gradient(90deg, rgba(79,140,255,.22), rgba(139,92,255,.12));
+  }
+  .track .idx{
+    width:22px;
+    text-align:center;
+    color:var(--muted);
+    font-size:.8rem;
+    font-variant-numeric:tabular-nums;
+    flex:none;
+  }
+  .track.active .idx{ color:var(--accent); }
+  .track .name{
+    flex:1;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:.92rem;
+  }
+  .track.active .name{ font-weight:600; }
+  .track .remove{
+    background:transparent;
+    border:0;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:.95rem;
+    padding:6px 8px;
+    border-radius:8px;
+    opacity:.55;
+    flex:none;
+    transition:.15s;
+    font-family:inherit;
+    line-height:1;
+  }
+  .track .remove:hover{
+    color:#ff6b6b;
+    background:rgba(255,107,107,.14);
+    opacity:1;
+  }
+  .empty{
+    padding:20px 12px;
+    text-align:center;
+    color:var(--muted);
+    font-size:.88rem;
+  }
 </style>
 </head>
 <body>
 
+<!-- Fixed background layer (never scrolls) -->
+<div id="bg"></div>
+
 <div class="app">
-  <header>
-    <h1>Audio Playlist</h1>
-    <p class="sub">Upload audio files, build a playlist, and loop it.</p>
+  <header class="topbar">
+    <div>
+      <h1>Playlist</h1>
+      <!-- <p class="sub">Tap ▶ to play, ⚙ for settings &amp; playlist.</p> -->
+    </div>
+    <button id="settingsBtn" class="icon-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
   </header>
 
-  <div class="bg-bar">
-    <button id="bgBtn" class="ghost" type="button">🖼 Set background image</button>
-    <button id="bgClearBtn" class="ghost" type="button" hidden>✕ Remove background</button>
-  </div>
-  <input id="bgInput" type="file" accept="image/*" hidden>
-
-  <label id="drop" class="drop" for="fileInput">
-    <span class="drop-icon">⬆</span>
-    <span><strong>Click to upload</strong> or drag &amp; drop audio files here</span>
-    <span class="hint">mp3 · wav · ogg · m4a · flac · aac …</span>
-    <span class="hint-ios">On iPhone: tap above, then tap <em>Select</em> in Files to pick multiple tracks.</span>
-  </label>
-
-  <input
-    id="fileInput"
-    type="file"
-    accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.oga,.opus,.flac,.weba,.webm,.aiff,.aif,.wma"
-    multiple
-    hidden>
-
-  <section class="panel">
-    <div class="panel-head">
-      <h2>Playlist <span id="count" class="count">0</span></h2>
-      <button id="clearBtn" class="ghost" type="button">Clear all</button>
-    </div>
-    <ul id="playlist" class="playlist"></ul>
-  </section>
-
+  <!-- MAIN SCREEN: only the play bar -->
   <section class="player">
     <div class="now">
       <div id="nowTitle" class="now-title">No track selected</div>
-      <div id="nowSub" class="now-sub">Add audio files to begin</div>
+      <div id="nowSub" class="now-sub">Open settings to add audio files</div>
     </div>
 
     <div class="progress-row">
@@ -381,34 +472,91 @@
       </div>
     </div>
   </section>
-
-  <audio id="audio" preload="metadata" playsinline webkit-playsinline></audio>
 </div>
+
+<!-- Scrim + sidebar -->
+<div id="scrim"></div>
+
+<aside id="sidebar" aria-label="Settings and playlist" aria-hidden="true">
+  <div class="sidebar-head">
+    <h2>Settings &amp; Playlist</h2>
+    <button id="closeSidebar" class="icon-btn" type="button" aria-label="Close">✕</button>
+  </div>
+
+  <div class="sidebar-body">
+    <h3>Appearance</h3>
+    <div class="row-between" style="flex-wrap:wrap">
+      <button id="bgBtn" class="ghost" type="button">🖼 Set background image</button>
+      <button id="bgClearBtn" class="ghost" type="button" hidden>✕ Remove background</button>
+    </div>
+    <label class="setting-row" for="dim">
+      <span>Background dim</span>
+      <input id="dim" type="range" min="0" max="100" step="1" value="65">
+      <span id="dimVal">65%</span>
+    </label>
+    <label class="setting-row" for="alpha">
+      <span>Panel transparency</span>
+      <input id="alpha" type="range" min="0" max="80" step="1" value="10">
+      <span id="alphaVal">10%</span>
+    </label>
+
+    <h3>Upload</h3>
+    <label id="drop" class="drop" for="fileInput">
+      <span class="drop-icon">⬆</span>
+      <span><strong>Tap to upload</strong> or drop audio files here</span>
+      <span class="hint">mp3 · wav · ogg · m4a · flac · aac …</span>
+      <span class="hint-ios">On iPhone: tap above, then <em>Select</em> in Files to pick multiple.</span>
+    </label>
+    <input
+      id="fileInput"
+      type="file"
+      accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.oga,.opus,.flac,.weba,.webm,.aiff,.aif,.wma"
+      multiple
+      hidden>
+
+    <div class="row-between" style="margin-top:12px">
+      <h3 style="margin:0">Playlist <span id="count" class="count">0</span></h3>
+      <button id="clearBtn" class="ghost" type="button">Clear all</button>
+    </div>
+    <ul id="playlist" class="playlist"></ul>
+  </div>
+</aside>
+
+<input id="bgInput" type="file" accept="image/*" hidden>
+<audio id="audio" preload="metadata" playsinline webkit-playsinline></audio>
 
 <script>
 (() => {
   "use strict";
 
   const els = {
-    audio:     document.getElementById('audio'),
-    fileInput: document.getElementById('fileInput'),
-    drop:      document.getElementById('drop'),
-    playlist:  document.getElementById('playlist'),
-    count:     document.getElementById('count'),
-    clearBtn:  document.getElementById('clearBtn'),
-    nowTitle:  document.getElementById('nowTitle'),
-    nowSub:    document.getElementById('nowSub'),
-    curTime:   document.getElementById('curTime'),
-    durTime:   document.getElementById('durTime'),
-    seek:      document.getElementById('seek'),
-    playBtn:   document.getElementById('playBtn'),
-    prevBtn:   document.getElementById('prevBtn'),
-    nextBtn:   document.getElementById('nextBtn'),
-    loopBtn:   document.getElementById('loopBtn'),
-    volume:    document.getElementById('volume'),
-    bgBtn:      document.getElementById('bgBtn'),
-    bgClearBtn: document.getElementById('bgClearBtn'),
-    bgInput:    document.getElementById('bgInput')
+    audio:       document.getElementById('audio'),
+    fileInput:   document.getElementById('fileInput'),
+    drop:        document.getElementById('drop'),
+    playlist:    document.getElementById('playlist'),
+    count:       document.getElementById('count'),
+    clearBtn:    document.getElementById('clearBtn'),
+    nowTitle:    document.getElementById('nowTitle'),
+    nowSub:      document.getElementById('nowSub'),
+    curTime:     document.getElementById('curTime'),
+    durTime:     document.getElementById('durTime'),
+    seek:        document.getElementById('seek'),
+    playBtn:     document.getElementById('playBtn'),
+    prevBtn:     document.getElementById('prevBtn'),
+    nextBtn:     document.getElementById('nextBtn'),
+    loopBtn:     document.getElementById('loopBtn'),
+    volume:      document.getElementById('volume'),
+    bgBtn:       document.getElementById('bgBtn'),
+    bgClearBtn:  document.getElementById('bgClearBtn'),
+    bgInput:     document.getElementById('bgInput'),
+    settingsBtn: document.getElementById('settingsBtn'),
+    closeSidebar:document.getElementById('closeSidebar'),
+    sidebar:     document.getElementById('sidebar'),
+    scrim:       document.getElementById('scrim'),
+    alpha:       document.getElementById('alpha'),
+    alphaVal:    document.getElementById('alphaVal'),
+    dim:         document.getElementById('dim'),
+    dimVal:      document.getElementById('dimVal')
   };
 
   const AUDIO_EXT = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba|webm|aiff?|wma)$/i;
@@ -464,7 +612,6 @@
     tx.oncomplete = res; tx.onerror = () => rej(tx.error);
   })); }
 
-  // Detect iOS to show the extra hint (multi-select works in the Files app).
   const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (IS_IOS) document.documentElement.classList.add('ios');
@@ -472,13 +619,12 @@
   /** @type {{id:number, key:string, name:string, url:string}[]} */
   let tracks = [];
   let current = -1;
-  let loopMode = 'off';          // 'off' | 'all' | 'one'
+  let loopMode = 'off';
   let uid = 0;
 
-  /* ---- Background image state ---- */
-  let bgUrl = null;              // object URL applied to the CSS variable
-  let bgArtwork = [];            // Media Session artwork derived from bg
-  let fallbackArtwork = [];      // generated placeholder artwork
+  let bgUrl = null;
+  let bgArtwork = [];
+  let fallbackArtwork = [];
 
   function makeFallbackArtwork() {
     try {
@@ -525,29 +671,43 @@
       els.nowTitle.textContent = 'No track selected';
       els.nowSub.textContent = tracks.length
         ? 'Pick a track from the playlist'
-        : 'Add audio files to begin';
+        : 'Open settings to add audio files';
       document.title = 'Audio Playlist Player';
     }
     els.count.textContent = String(tracks.length);
   }
 
   /* ------------------------------------------------------------------ */
-  /*  Media Session (lock screen / Control Center / headset buttons)     */
+  /*  Sidebar                                                            */
+  /* ------------------------------------------------------------------ */
+
+  function openSidebar() {
+    els.sidebar.classList.add('open');
+    els.sidebar.setAttribute('aria-hidden', 'false');
+    els.scrim.classList.add('show');
+    document.body.classList.add('no-scroll');
+  }
+  function closeSidebar() {
+    els.sidebar.classList.remove('open');
+    els.sidebar.setAttribute('aria-hidden', 'true');
+    els.scrim.classList.remove('show');
+    document.body.classList.remove('no-scroll');
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Media Session                                                      */
   /* ------------------------------------------------------------------ */
 
   function updateMediaSession() {
     if (!('mediaSession' in navigator)) return;
     const ms = navigator.mediaSession;
-
     if (current < 0 || !tracks[current]) {
       try { ms.metadata = null; } catch (e) {}
       try { ms.playbackState = 'none'; } catch (e) {}
       return;
     }
-
     const t = tracks[current];
     const art = (bgArtwork && bgArtwork.length) ? bgArtwork : fallbackArtwork;
-
     try {
       if (typeof MediaMetadata !== 'undefined') {
         ms.metadata = new MediaMetadata({
@@ -558,10 +718,7 @@
         });
       }
     } catch (e) {}
-
-    try {
-      ms.playbackState = els.audio.paused ? 'paused' : 'playing';
-    } catch (e) {}
+    try { ms.playbackState = els.audio.paused ? 'paused' : 'playing'; } catch (e) {}
   }
 
   function updatePositionState() {
@@ -605,7 +762,7 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /*  Background image                                                   */
+  /*  Background, dim & transparency                                     */
   /* ------------------------------------------------------------------ */
 
   function blobToArtwork(blob) {
@@ -648,9 +805,23 @@
     document.documentElement.style.setProperty('--bg-image', `url("${bgUrl}")`);
     els.bgClearBtn.hidden = false;
 
-    // Downscale to a 512×512 data URL for lock-screen artwork.
     bgArtwork = await blobToArtwork(blob);
     updateMediaSession();
+  }
+
+  function applyAlpha(transparencyPct) {
+    const t = Math.max(0, Math.min(80, Number(transparencyPct) || 0));
+    const alpha = 1 - (t / 100);
+    document.documentElement.style.setProperty('--panel-alpha', alpha.toFixed(3));
+    els.alpha.value = String(t);
+    els.alphaVal.textContent = t + '%';
+  }
+
+  function applyDim(dimPct) {
+    const d = Math.max(0, Math.min(100, Number(dimPct) || 0));
+    document.documentElement.style.setProperty('--bg-dim', (d / 100).toFixed(3));
+    els.dim.value = String(d);
+    els.dimVal.textContent = d + '%';
   }
 
   /* ------------------------------------------------------------------ */
@@ -664,7 +835,7 @@
     if (!tracks.length) {
       const li = document.createElement('li');
       li.className = 'empty';
-      li.textContent = 'No tracks yet — upload or drop audio files above.';
+      li.textContent = 'No tracks yet — upload audio files above.';
       els.playlist.appendChild(li);
     } else {
       const frag = document.createDocumentFragment();
@@ -719,8 +890,6 @@
     if (!files.length) return;
 
     const wasEmpty = tracks.length === 0;
-
-    // De-duplicate by name+size+lastModified so re-picking doesn't add clones.
     const existing = new Set(tracks.map(t => t.key));
     let added = 0;
 
@@ -737,16 +906,12 @@
     });
 
     if (!added) return;
-
     render();
-
-    // Load (but don't auto-play) the very first track added.
     if (wasEmpty) playTrack(0, false);
   }
 
   function removeTrack(index) {
     if (index < 0 || index >= tracks.length) return;
-
     const wasCurrent = index === current;
     dbDelete(tracks[index].key).catch(() => {});
     URL.revokeObjectURL(tracks[index].url);
@@ -773,7 +938,6 @@
     } else if (index < current) {
       current--;
     }
-
     render();
     updateMediaSession();
   }
@@ -821,7 +985,7 @@
   }
 
   function togglePlay() {
-    if (!tracks.length) { els.fileInput.click(); return; }
+    if (!tracks.length) { openSidebar(); return; }
     if (current === -1) { playTrack(0); return; }
     if (els.audio.paused) {
       const p = els.audio.play();
@@ -833,35 +997,20 @@
 
   function nextTrack(auto = false) {
     if (!tracks.length) return;
-
     if (current === -1) { playTrack(0); return; }
-
-    if (current < tracks.length - 1) {
-      playTrack(current + 1);
-      return;
-    }
-
-    // We're on the last track: wrap to the first track and play.
-    // (Covers both manual "next" and repeat-all, and the end-of-list case
-    //  with repeat OFF — playback restarts from the front.)
+    if (current < tracks.length - 1) { playTrack(current + 1); return; }
     playTrack(0);
   }
 
   function prevTrack() {
     if (!tracks.length) return;
-
     if (current !== -1 && els.audio.currentTime > 3) {
       els.audio.currentTime = 0;
       return;
     }
-
-    if (current > 0) {
-      playTrack(current - 1);
-    } else if (current === 0) {
-      playTrack(tracks.length - 1);
-    } else {
-      playTrack(0);
-    }
+    if (current > 0) playTrack(current - 1);
+    else if (current === 0) playTrack(tracks.length - 1);
+    else playTrack(0);
   }
 
   function seekBy(delta) {
@@ -875,13 +1024,21 @@
   /*  Events                                                             */
   /* ------------------------------------------------------------------ */
 
-  // Fired once with ALL selected files on iOS (Files app) and desktop.
-  els.fileInput.addEventListener('change', e => {
-    addFiles(e.target.files);
-    e.target.value = ''; // allow re-adding the same file(s)
+  // Sidebar open/close
+  els.settingsBtn.addEventListener('click', openSidebar);
+  els.closeSidebar.addEventListener('click', closeSidebar);
+  els.scrim.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && els.sidebar.classList.contains('open')) closeSidebar();
   });
 
-  // Background image upload
+  // File picker
+  els.fileInput.addEventListener('change', e => {
+    addFiles(e.target.files);
+    e.target.value = '';
+  });
+
+  // Background image
   els.bgBtn.addEventListener('click', () => els.bgInput.click());
   els.bgInput.addEventListener('change', async (e) => {
     const file = e.target.files && e.target.files[0];
@@ -895,7 +1052,29 @@
     try { await setDelete('background'); } catch (err) {}
   });
 
-  // Drag & drop (desktop; iPadOS also supports it in some cases)
+  // Dim slider
+  let dimSaveTimer = null;
+  els.dim.addEventListener('input', () => {
+    const v = Number(els.dim.value);
+    applyDim(v);
+    clearTimeout(dimSaveTimer);
+    dimSaveTimer = setTimeout(() => {
+      setPut({ key: 'dim', value: v }).catch(() => {});
+    }, 250);
+  });
+
+  // Transparency slider
+  let alphaSaveTimer = null;
+  els.alpha.addEventListener('input', () => {
+    const v = Number(els.alpha.value);
+    applyAlpha(v);
+    clearTimeout(alphaSaveTimer);
+    alphaSaveTimer = setTimeout(() => {
+      setPut({ key: 'alpha', value: v }).catch(() => {});
+    }, 250);
+  });
+
+  // Drag & drop
   ['dragenter', 'dragover'].forEach(evt => {
     els.drop.addEventListener(evt, e => {
       e.preventDefault();
@@ -914,7 +1093,7 @@
   window.addEventListener('dragover', e => e.preventDefault());
   window.addEventListener('drop', e => e.preventDefault());
 
-  // Playlist interactions (delegated)
+  // Playlist interactions
   els.playlist.addEventListener('click', e => {
     const li = e.target.closest('.track');
     if (!li) return;
@@ -930,6 +1109,7 @@
     } else {
       playTrack(index);
     }
+    closeSidebar();
   });
 
   els.clearBtn.addEventListener('click', clearAll);
@@ -942,7 +1122,7 @@
     renderLoop();
   });
 
-  // Audio element events
+  // Audio events
   els.audio.addEventListener('play', () => {
     setPlayIcon(true);
     if ('mediaSession' in navigator) {
@@ -974,7 +1154,6 @@
 
   els.audio.addEventListener('ended', () => {
     if (!tracks.length) return;
-
     if (loopMode === 'one') {
       els.audio.currentTime = 0;
       const p = els.audio.play();
@@ -985,12 +1164,9 @@
   });
 
   els.audio.addEventListener('error', () => {
-    if (current >= 0) {
-      els.nowSub.textContent = '⚠ Could not play this file';
-    }
+    if (current >= 0) els.nowSub.textContent = '⚠ Could not play this file';
   });
 
-  // Seek bar
   els.seek.addEventListener('input', () => {
     const d = els.audio.duration;
     if (!isFinite(d) || d <= 0) return;
@@ -999,16 +1175,13 @@
     updatePositionState();
   });
 
-  // Volume
   els.volume.addEventListener('input', () => {
     els.audio.volume = Number(els.volume.value);
   });
 
-  // Keyboard shortcuts
   document.addEventListener('keydown', e => {
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'button' || e.target.isContentEditable) return;
-
     switch (e.code) {
       case 'Space':      e.preventDefault(); togglePlay(); break;
       case 'ArrowRight': e.preventDefault(); seekBy(5);    break;
@@ -1032,29 +1205,36 @@
   setPlayIcon(false);
   initMediaSession();
   updateMediaSession();
+  applyAlpha(Number(els.alpha.value)); // default 10%
+  applyDim(Number(els.dim.value));     // default 65%
 
   (async () => {
-    // Restore playlist
     try {
       const recs = await dbAll();
       if (recs.length) {
         recs.sort((a, b) => (a.ts || 0) - (b.ts || 0));
         recs.forEach(r => tracks.push({
-          id: ++uid,
-          key: r.key,
-          name: r.name,
-          url: URL.createObjectURL(r.blob)
+          id: ++uid, key: r.key, name: r.name, url: URL.createObjectURL(r.blob)
         }));
         render();
-        playTrack(0, false);   // load first track, paused
+        playTrack(0, false);
       }
-    } catch (e) { /* storage unavailable — ignore */ }
+    } catch (e) {}
 
-    // Restore background image
     try {
       const bg = await setGet('background');
       if (bg && bg.blob) await applyBackground(bg.blob);
-    } catch (e) { /* ignore */ }
+    } catch (e) {}
+
+    try {
+      const a = await setGet('alpha');
+      if (a && typeof a.value === 'number') applyAlpha(a.value);
+    } catch (e) {}
+
+    try {
+      const d = await setGet('dim');
+      if (d && typeof d.value === 'number') applyDim(d.value);
+    } catch (e) {}
   })();
 })();
 </script>
