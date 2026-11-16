@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<!-- ===== PWA / iOS Home Screen ===== -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,7 +12,6 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="theme-color" content="#0d0f14">
 <meta name="color-scheme" content="dark">
-<!-- manifest + apple-touch-icon are injected by JS (self-contained file) -->
 
 <title>Audio Playlist Player</title>
 <style>
@@ -48,7 +46,6 @@
   }
   body.no-scroll{ overflow:hidden; }
 
-  /* -------- Fixed background -------- */
   #bg{
     position:fixed; inset:0; z-index:-1;
     background-color:var(--bg);
@@ -77,7 +74,6 @@
 
   .app{ width:100%; max-width:800px; position:relative; z-index:1; }
 
-  /* -------- Topbar -------- */
   .topbar{ margin-bottom:18px; }
   h1{ font-size:1.55rem; margin:0 0 4px; letter-spacing:-.01em; }
   .sub{ margin:0; color:var(--muted); font-size:.93rem; }
@@ -85,7 +81,6 @@
   body.minimal .topbar{ display:none; }
   body.minimal .playlist-panel{ display:none; }
 
-  /* -------- Player card -------- */
   .player{
     position:relative;
     background:rgba(22,25,34, var(--panel-alpha));
@@ -195,7 +190,6 @@
     .vol input{ flex:1; width:auto; }
   }
 
-  /* -------- Playlist panel -------- */
   .panel{
     margin-top:16px;
     background:rgba(22,25,34, var(--panel-alpha));
@@ -226,6 +220,7 @@
     cursor:pointer; font-size:.8rem; font-family:inherit; transition:.15s;
   }
   .ghost:hover{ color:var(--text); border-color:var(--line-hi); }
+  .ghost:disabled{ opacity:.4; cursor:not-allowed; }
 
   .playlist{
     list-style:none; margin:0; padding:6px;
@@ -270,7 +265,6 @@
     padding:24px 16px; text-align:center; color:var(--muted); font-size:.9rem;
   }
 
-  /* -------- Sidebar / drawer -------- */
   #scrim{
     position:fixed; inset:0; background:rgba(0,0,0,.55);
     opacity:0; pointer-events:none;
@@ -329,8 +323,13 @@
   .sidebar-hint{
     color:var(--muted); font-size:.75rem; margin:4px 0 2px; line-height:1.35;
   }
+  .sidebar-hint code{
+    background:rgba(255,255,255,.06);
+    padding:1px 4px;
+    border-radius:4px;
+    font-size:.72rem;
+  }
 
-  /* -------- Drop zone -------- */
   .drop{
     display:flex; flex-direction:column; align-items:center; gap:6px;
     padding:22px 16px;
@@ -349,7 +348,6 @@
   .hint-ios{ display:none; color:var(--muted); font-size:.74rem; margin-top:2px; }
   .ios .hint-ios{ display:block; }
 
-  /* -------- Install hint (iOS Safari only) -------- */
   .install-hint{
     position:fixed;
     left:12px; right:12px;
@@ -395,6 +393,27 @@
     to{ transform:translateY(0); opacity:1; }
   }
   body.standalone .install-hint{ display:none !important; }
+
+  /* tiny toast */
+  #toast{
+    position:fixed;
+    left:50%; bottom:calc(24px + env(safe-area-inset-bottom));
+    transform:translateX(-50%) translateY(20px);
+    background:rgba(22,25,34,.98);
+    border:1px solid var(--line-hi);
+    color:var(--text);
+    padding:10px 16px;
+    border-radius:12px;
+    font-size:.85rem;
+    box-shadow:0 8px 24px rgba(0,0,0,.55);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s, transform .2s;
+    z-index:200;
+    max-width:90vw;
+    text-align:center;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -403,8 +422,8 @@
 
 <div class="app">
   <header class="topbar">
-    <!-- <h1>Audio Playlist</h1> -->
-    <!-- <p class="sub">Tap ▶ to play · ⚙ for settings · ▴ to hide everything except the play bar</p> -->
+    <!-- <h1>Audio Playlist</h1>
+    <p class="sub">Tap ▶ to play · ⚙ for settings · ▴ to hide everything except the play bar</p> -->
   </header>
 
   <section class="player">
@@ -415,7 +434,7 @@
 
     <div class="now">
       <div id="nowTitle" class="now-title">No track selected</div>
-      <!-- <div id="nowSub" class="now-sub">Open settings to add audio files</div> -->
+      <div id="nowSub" class="now-sub">Open settings to add audio files</div>
     </div>
 
     <div class="progress-row">
@@ -484,7 +503,7 @@
       <button id="lockBtn" class="ghost" type="button">🔒 Set lock screen image</button>
       <button id="lockClearBtn" class="ghost" type="button" hidden>✕ Remove</button>
     </div>
-    <p class="sidebar-hint">Shown as artwork on the iPhone lock screen / Control Center while playing. Falls back to the background image.</p>
+    <!-- <p class="sidebar-hint">Shown as artwork on the iPhone lock screen / Control Center while playing. Falls back to the background image.</p> -->
 
     <h3>Upload songs</h3>
     <label id="drop" class="drop" for="fileInput">
@@ -499,6 +518,16 @@
       accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.oga,.opus,.flac,.weba,.webm,.aiff,.aif,.wma"
       multiple
       hidden>
+
+    <h3>Backup &amp; restore</h3>
+    <div class="row-between" style="flex-wrap:wrap">
+      <button id="exportBtn" class="ghost" type="button">⬇ Export playlist</button>
+      <button id="importBtn" class="ghost" type="button">⬆ Import playlist</button>
+    </div>
+    <input id="importInput" type="file" accept=".json,application/json" hidden>
+    <p class="sidebar-hint">
+      <!-- iOS keeps Safari and the home-screen app in <strong>separate storage</strong>. Upload songs directly in the installed app and they stay there. Use Export in Safari → Import in the home-screen app to move a playlist across. Large playlists may take a while. -->
+    </p>
   </div>
 </aside>
 
@@ -509,6 +538,8 @@
   </div>
   <button id="dismissHint" class="install-hint-close" type="button" aria-label="Dismiss">✕</button>
 </div>
+
+<div id="toast" role="status" aria-live="polite"></div>
 
 <input id="bgInput" type="file" accept="image/*" hidden>
 <input id="lockInput" type="file" accept="image/*" hidden>
@@ -555,13 +586,17 @@
     dim:          document.getElementById('dim'),
     dimVal:       document.getElementById('dimVal'),
     installHint:  document.getElementById('installHint'),
-    dismissHint:  document.getElementById('dismissHint')
+    dismissHint:  document.getElementById('dismissHint'),
+    exportBtn:    document.getElementById('exportBtn'),
+    importBtn:    document.getElementById('importBtn'),
+    importInput:  document.getElementById('importInput'),
+    toast:        document.getElementById('toast')
   };
 
   const AUDIO_EXT = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba|webm|aiff?|wma)$/i;
   const LOOP_LABELS = { off: 'Off', all: 'All', one: 'One' };
 
-  /* ---- IndexedDB persistence ---- */
+  /* ---- IndexedDB ---- */
   const DB_NAME = 'audio-playlist', STORE = 'tracks', SETTINGS = 'settings';
   let dbPromise = null;
   function db(){
@@ -633,13 +668,23 @@
   let bgArtwork = [];
   let lockArtwork = [];
   let fallbackArtwork = [];
-  let customIconDataUrl = null;   // user-uploaded, 512×512 PNG data URL
+  let customIconDataUrl = null;
   let manifestUrl = null;
 
   /* ------------------------------------------------------------------ */
-  /*  PWA: icons + manifest                                              */
+  /*  Toast                                                              */
   /* ------------------------------------------------------------------ */
+  let toastTimer = null;
+  function toast(msg, ms) {
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => els.toast.classList.remove('show'), ms || 2200);
+  }
 
+  /* ------------------------------------------------------------------ */
+  /*  PWA icons + manifest                                               */
+  /* ------------------------------------------------------------------ */
   function generateIcon(size) {
     const c = document.createElement('canvas');
     c.width = c.height = size;
@@ -656,35 +701,28 @@
     g.fillText('♪', size / 2, size / 2 + size * 0.06);
     return c.toDataURL('image/png');
   }
-
   function iconDataUrlFor(size) {
     return customIconDataUrl || generateIcon(size);
   }
-
   function installIconLinks() {
     document.querySelectorAll('link[rel="apple-touch-icon"], link[rel="icon"]').forEach(l => l.remove());
-
     [180, 167, 152, 120].forEach(size => {
       const link = document.createElement('link');
       link.rel = 'apple-touch-icon';
       link.setAttribute('sizes', `${size}x${size}`);
-      // For custom icons use the same 512 source; iOS scales fine.
       link.href = customIconDataUrl || generateIcon(size);
       document.head.appendChild(link);
     });
-
     const fav = document.createElement('link');
     fav.rel = 'icon';
     fav.type = 'image/png';
     fav.href = iconDataUrlFor(64);
     document.head.appendChild(fav);
   }
-
   function installManifest() {
     if (manifestUrl) { try { URL.revokeObjectURL(manifestUrl); } catch (e) {} manifestUrl = null; }
     const old = document.querySelector('link[rel="manifest"]');
     if (old) old.remove();
-
     try {
       const manifest = {
         name: 'Audio Playlist',
@@ -708,24 +746,18 @@
       link.rel = 'manifest';
       link.href = manifestUrl;
       document.head.appendChild(link);
-    } catch (e) { /* ignore */ }
+    } catch (e) {}
   }
-
-  function rebuildIconAssets() {
-    installIconLinks();
-    installManifest();
-  }
+  function rebuildIconAssets() { installIconLinks(); installManifest(); }
 
   function setupPWA() {
     rebuildIconAssets();
-
     try {
       const dismissed = localStorage.getItem('installHintDismissed') === '1';
       if (IS_SAFARI_IOS && !IS_STANDALONE && !dismissed) {
         els.installHint.hidden = false;
       }
-    } catch (e) { /* ignore */ }
-
+    } catch (e) {}
     els.dismissHint.addEventListener('click', () => {
       els.installHint.hidden = true;
       try { localStorage.setItem('installHintDismissed', '1'); } catch (e) {}
@@ -757,19 +789,16 @@
   /* ------------------------------------------------------------------ */
   /*  Helpers                                                            */
   /* ------------------------------------------------------------------ */
-
   function fmt(seconds) {
     if (!isFinite(seconds) || seconds < 0) return '0:00';
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
     return m + ':' + String(s).padStart(2, '0');
   }
-
   function setPlayIcon(isPlaying) {
     els.playBtn.textContent = isPlaying ? '⏸' : '▶';
     els.playBtn.setAttribute('aria-label', isPlaying ? 'Pause' : 'Play');
   }
-
   function updateNowPlaying() {
     if (current >= 0 && tracks[current]) {
       els.nowTitle.textContent = tracks[current].name;
@@ -788,7 +817,6 @@
   /* ------------------------------------------------------------------ */
   /*  Sidebar + minimize                                                 */
   /* ------------------------------------------------------------------ */
-
   function openSidebar() {
     els.sidebar.classList.add('open');
     els.sidebar.setAttribute('aria-hidden', 'false');
@@ -801,7 +829,6 @@
     els.scrim.classList.remove('show');
     document.body.classList.remove('no-scroll');
   }
-
   function setMinimal(on) {
     document.body.classList.toggle('minimal', on);
     els.hideBtn.textContent = on ? '▾' : '▴';
@@ -813,13 +840,11 @@
   /* ------------------------------------------------------------------ */
   /*  Media Session                                                      */
   /* ------------------------------------------------------------------ */
-
   function pickArtwork() {
     if (lockArtwork && lockArtwork.length) return lockArtwork;
     if (bgArtwork && bgArtwork.length)     return bgArtwork;
     return fallbackArtwork;
   }
-
   function updateMediaSession() {
     if (!('mediaSession' in navigator)) return;
     const ms = navigator.mediaSession;
@@ -841,7 +866,6 @@
     } catch (e) {}
     try { ms.playbackState = els.audio.paused ? 'paused' : 'playing'; } catch (e) {}
   }
-
   function updatePositionState() {
     if (!('mediaSession' in navigator)) return;
     if (typeof navigator.mediaSession.setPositionState !== 'function') return;
@@ -855,12 +879,10 @@
       });
     } catch (e) {}
   }
-
   function initMediaSession() {
     if (!('mediaSession' in navigator)) return;
     const ms = navigator.mediaSession;
     const safe = (action, fn) => { try { ms.setActionHandler(action, fn); } catch (e) {} };
-
     safe('play', () => {
       if (current === -1) { playTrack(0); return; }
       const p = els.audio.play();
@@ -883,10 +905,8 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /*  Image → artwork helpers                                            */
+  /*  Image helpers                                                      */
   /* ------------------------------------------------------------------ */
-
-  // Square crop → multi-size JPEGs for the lock screen
   function blobToArtwork(blob) {
     return new Promise((resolve) => {
       let url = null;
@@ -916,8 +936,6 @@
       } catch (e) { if (url) URL.revokeObjectURL(url); resolve([]); }
     });
   }
-
-  // Square crop → single PNG data URL (used for the home-screen icon)
   function blobToIconDataUrl(blob, size) {
     return new Promise((resolve) => {
       let url = null;
@@ -934,7 +952,6 @@
             const c = document.createElement('canvas');
             c.width = c.height = size;
             const g = c.getContext('2d');
-            // iOS fills transparent icon pixels with black; pre-fill instead.
             g.fillStyle = '#0d0f14';
             g.fillRect(0, 0, size, size);
             g.drawImage(img, sx, sy, sMin, sMin, 0, 0, size, size);
@@ -947,11 +964,30 @@
       } catch (e) { if (url) URL.revokeObjectURL(url); resolve(null); }
     });
   }
+  function blobToDataUrl(blob) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = () => rej(r.error);
+      r.readAsDataURL(blob);
+    });
+  }
+  function dataUrlToBlob(dataUrl) {
+    const comma = dataUrl.indexOf(',');
+    const meta = dataUrl.slice(0, comma);
+    const b64 = dataUrl.slice(comma + 1);
+    const m = /data:([^;]+)/.exec(meta);
+    const mime = m ? m[1] : 'application/octet-stream';
+    const bin = atob(b64);
+    const len = bin.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
 
   /* ------------------------------------------------------------------ */
   /*  Background / lock screen / icon state                              */
   /* ------------------------------------------------------------------ */
-
   async function applyBackground(blob) {
     if (bgUrl) { URL.revokeObjectURL(bgUrl); bgUrl = null; }
     if (!blob) {
@@ -967,7 +1003,6 @@
     bgArtwork = await blobToArtwork(blob);
     updateMediaSession();
   }
-
   async function applyLockImage(blob) {
     if (!blob) {
       lockArtwork = [];
@@ -979,7 +1014,6 @@
     els.lockClearBtn.hidden = false;
     updateMediaSession();
   }
-
   async function applyIcon(blob) {
     if (!blob) {
       customIconDataUrl = null;
@@ -993,14 +1027,12 @@
     els.iconClearBtn.hidden = false;
     rebuildIconAssets();
   }
-
   function applyAlpha(transparencyPct) {
     const t = Math.max(0, Math.min(80, Number(transparencyPct) || 0));
     document.documentElement.style.setProperty('--panel-alpha', (1 - t / 100).toFixed(3));
     els.alpha.value = String(t);
     els.alphaVal.textContent = t + '%';
   }
-
   function applyDim(dimPct) {
     const d = Math.max(0, Math.min(100, Number(dimPct) || 0));
     document.documentElement.style.setProperty('--bg-dim', (d / 100).toFixed(3));
@@ -1011,11 +1043,9 @@
   /* ------------------------------------------------------------------ */
   /*  Rendering                                                          */
   /* ------------------------------------------------------------------ */
-
   function render() {
     const scrollTop = els.playlist.scrollTop;
     els.playlist.innerHTML = '';
-
     if (!tracks.length) {
       const li = document.createElement('li');
       li.className = 'empty';
@@ -1027,33 +1057,27 @@
         const li = document.createElement('li');
         li.className = 'track' + (i === current ? ' active' : '');
         li.dataset.index = String(i);
-
         const idx = document.createElement('span');
         idx.className = 'idx';
         idx.textContent = i === current ? '▶' : String(i + 1);
-
         const name = document.createElement('span');
         name.className = 'name';
         name.textContent = track.name;
         name.title = track.name;
-
         const remove = document.createElement('button');
         remove.className = 'remove';
         remove.type = 'button';
         remove.textContent = '✕';
         remove.title = 'Remove track';
         remove.setAttribute('aria-label', 'Remove track');
-
         li.append(idx, name, remove);
         frag.appendChild(li);
       });
       els.playlist.appendChild(frag);
     }
-
     els.playlist.scrollTop = scrollTop;
     updateNowPlaying();
   }
-
   function renderLoop() {
     els.loopBtn.classList.toggle('on', loopMode !== 'off');
     els.loopBtn.querySelector('.loop-icon').textContent = loopMode === 'one' ? '🔂' : '🔁';
@@ -1064,34 +1088,29 @@
   /* ------------------------------------------------------------------ */
   /*  Playlist management                                                */
   /* ------------------------------------------------------------------ */
-
   function addFiles(fileList) {
     if (!fileList || !fileList.length) return;
-
     const files = Array.from(fileList).filter(
       f => (f.type && f.type.startsWith('audio/')) || AUDIO_EXT.test(f.name)
     );
     if (!files.length) return;
-
     const wasEmpty = tracks.length === 0;
     const existing = new Set(tracks.map(t => t.key));
     let added = 0;
-
     files.forEach(file => {
       const key = `${file.name}|${file.size}|${file.lastModified}`;
       if (existing.has(key)) return;
       existing.add(key);
-
       const id = ++uid;
       const name = file.name.replace(/\.[^.]+$/, '');
       tracks.push({ id, key, name, url: URL.createObjectURL(file) });
       added++;
       dbPut({ key, name, blob: file, ts: Date.now() + id }).catch(() => {});
     });
-
     if (!added) return;
     render();
     if (wasEmpty) playTrack(0, false);
+    toast(added + ' track' + (added === 1 ? '' : 's') + ' added');
   }
 
   function removeTrack(index) {
@@ -1100,7 +1119,6 @@
     dbDelete(tracks[index].key).catch(() => {});
     URL.revokeObjectURL(tracks[index].url);
     tracks.splice(index, 1);
-
     if (!tracks.length) {
       current = -1;
       els.audio.pause();
@@ -1114,7 +1132,6 @@
       updateMediaSession();
       return;
     }
-
     if (wasCurrent) {
       els.audio.pause();
       current = -1;
@@ -1141,17 +1158,16 @@
     setPlayIcon(false);
     render();
     updateMediaSession();
+    toast('Playlist cleared');
   }
 
   /* ------------------------------------------------------------------ */
   /*  Playback                                                           */
   /* ------------------------------------------------------------------ */
-
   function playTrack(index, autoplay = true) {
     if (index < 0 || index >= tracks.length) return;
     current = index;
     els.audio.src = tracks[index].url;
-
     if (autoplay) {
       const p = els.audio.play();
       if (p && typeof p.catch === 'function') p.catch(() => {});
@@ -1159,7 +1175,6 @@
       els.audio.pause();
       setPlayIcon(false);
     }
-
     els.seek.value = 0;
     els.curTime.textContent = '0:00';
     els.durTime.textContent = '0:00';
@@ -1167,7 +1182,6 @@
     updateMediaSession();
     updatePositionState();
   }
-
   function togglePlay() {
     if (!tracks.length) { openSidebar(); return; }
     if (current === -1) { playTrack(0); return; }
@@ -1178,14 +1192,12 @@
       els.audio.pause();
     }
   }
-
   function nextTrack(auto = false) {
     if (!tracks.length) return;
     if (current === -1) { playTrack(0); return; }
     if (current < tracks.length - 1) { playTrack(current + 1); return; }
     playTrack(0);
   }
-
   function prevTrack() {
     if (!tracks.length) return;
     if (current !== -1 && els.audio.currentTime > 3) {
@@ -1196,7 +1208,6 @@
     else if (current === 0) playTrack(tracks.length - 1);
     else playTrack(0);
   }
-
   function seekBy(delta) {
     if (!tracks.length) return;
     const d = els.audio.duration;
@@ -1205,9 +1216,152 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /*  Export / Import                                                    */
+  /* ------------------------------------------------------------------ */
+  async function exportPlaylist() {
+    if (!tracks.length) { toast('Nothing to export'); return; }
+    els.exportBtn.disabled = true;
+    els.exportBtn.textContent = '⏳ Preparing…';
+    try {
+      const out = {
+        app: 'audio-playlist',
+        version: 1,
+        exported: new Date().toISOString(),
+        settings: {},
+        tracks: []
+      };
+
+      // Pull each track's blob from IndexedDB and base64 it
+      for (const t of tracks) {
+        try {
+          const rec = await new Promise((res, rej) => {
+            db().then(d => {
+              const r = d.transaction(STORE, 'readonly').objectStore(STORE).get(t.key);
+              r.onsuccess = () => res(r.result);
+              r.onerror   = () => rej(r.error);
+            }).catch(rej);
+          });
+          if (rec && rec.blob) {
+            out.tracks.push({
+              name: rec.name,
+              key:  rec.key,
+              type: rec.blob.type || 'audio/mpeg',
+              audio: await blobToDataUrl(rec.blob)
+            });
+          }
+        } catch (e) {}
+      }
+
+      // Settings
+      for (const k of ['alpha', 'dim', 'background', 'lockscreen', 'icon']) {
+        try {
+          const s = await setGet(k);
+          if (!s) continue;
+          if (s.blob) {
+            out.settings[k] = { dataUrl: await blobToDataUrl(s.blob), type: s.type || '' };
+          } else if (typeof s.value === 'number') {
+            out.settings[k] = { value: s.value };
+          }
+        } catch (e) {}
+      }
+
+      const json = JSON.stringify(out);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.href = url;
+      a.download = `playlist-${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      toast('Exported ' + out.tracks.length + ' track' + (out.tracks.length === 1 ? '' : 's'));
+    } catch (e) {
+      toast('Export failed: ' + (e && e.message ? e.message : 'unknown'));
+    } finally {
+      els.exportBtn.disabled = false;
+      els.exportBtn.textContent = '⬇ Export playlist';
+    }
+  }
+
+  async function importPlaylist(file) {
+    els.importBtn.disabled = true;
+    els.importBtn.textContent = '⏳ Importing…';
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data || !Array.isArray(data.tracks)) throw new Error('Not a playlist backup');
+
+      // Tracks
+      let added = 0, skipped = 0;
+      const existing = new Set(tracks.map(t => t.key));
+      for (const tr of data.tracks) {
+        try {
+          if (!tr.audio) { skipped++; continue; }
+          const blob = dataUrlToBlob(tr.audio);
+          const key = tr.key || `${tr.name || 'track'}|${blob.size}|${Date.now() + Math.random()}`;
+          if (existing.has(key)) { skipped++; continue; }
+          existing.add(key);
+          const id = ++uid;
+          const name = (tr.name || 'Untitled').toString();
+          tracks.push({ id, key, name, url: URL.createObjectURL(blob) });
+          await dbPut({ key, name, blob, ts: Date.now() + id });
+          added++;
+        } catch (e) { skipped++; }
+      }
+
+      // Settings
+      const s = data.settings || {};
+      if (s.alpha && typeof s.alpha.value === 'number') {
+        applyAlpha(s.alpha.value);
+        await setPut({ key: 'alpha', value: s.alpha.value }).catch(() => {});
+      }
+      if (s.dim && typeof s.dim.value === 'number') {
+        applyDim(s.dim.value);
+        await setPut({ key: 'dim', value: s.dim.value }).catch(() => {});
+      }
+      if (s.background && s.background.dataUrl) {
+        try {
+          const blob = dataUrlToBlob(s.background.dataUrl);
+          await applyBackground(blob);
+          await setPut({ key: 'background', blob, type: s.background.type || blob.type }).catch(() => {});
+        } catch (e) {}
+      }
+      if (s.lockscreen && s.lockscreen.dataUrl) {
+        try {
+          const blob = dataUrlToBlob(s.lockscreen.dataUrl);
+          await applyLockImage(blob);
+          await setPut({ key: 'lockscreen', blob, type: s.lockscreen.type || blob.type }).catch(() => {});
+        } catch (e) {}
+      }
+      if (s.icon && s.icon.dataUrl) {
+        try {
+          const blob = dataUrlToBlob(s.icon.dataUrl);
+          await applyIcon(blob);
+          await setPut({ key: 'icon', blob, type: s.icon.type || blob.type }).catch(() => {});
+        } catch (e) {}
+      }
+
+      render();
+      updateMediaSession();
+      if (tracks.length && current === -1) playTrack(0, false);
+
+      const msg = added
+        ? `Imported ${added} track${added === 1 ? '' : 's'}` + (skipped ? ` · ${skipped} skipped` : '')
+        : 'Nothing new to import';
+      toast(msg, 2800);
+    } catch (e) {
+      toast('Import failed: ' + (e && e.message ? e.message : 'invalid file'), 3200);
+    } finally {
+      els.importBtn.disabled = false;
+      els.importBtn.textContent = '⬆ Import playlist';
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
   /*  Events                                                             */
   /* ------------------------------------------------------------------ */
-
   els.settingsBtn.addEventListener('click', openSidebar);
   els.closeSidebar.addEventListener('click', closeSidebar);
   els.scrim.addEventListener('click', closeSidebar);
@@ -1224,7 +1378,7 @@
     e.target.value = '';
   });
 
-  // Background image
+  // Background
   els.bgBtn.addEventListener('click', () => els.bgInput.click());
   els.bgInput.addEventListener('change', async (e) => {
     const file = e.target.files && e.target.files[0];
@@ -1238,7 +1392,7 @@
     try { await setDelete('background'); } catch (err) {}
   });
 
-  // Lock-screen image
+  // Lock screen
   els.lockBtn.addEventListener('click', () => els.lockInput.click());
   els.lockInput.addEventListener('change', async (e) => {
     const file = e.target.files && e.target.files[0];
@@ -1252,7 +1406,7 @@
     try { await setDelete('lockscreen'); } catch (err) {}
   });
 
-  // Home-screen icon
+  // Icon
   els.iconBtn.addEventListener('click', () => els.iconInput.click());
   els.iconInput.addEventListener('change', async (e) => {
     const file = e.target.files && e.target.files[0];
@@ -1266,7 +1420,17 @@
     try { await setDelete('icon'); } catch (err) {}
   });
 
-  // Dim slider
+  // Export / import
+  els.exportBtn.addEventListener('click', exportPlaylist);
+  els.importBtn.addEventListener('click', () => els.importInput.click());
+  els.importInput.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    await importPlaylist(file);
+  });
+
+  // Sliders
   let dimSaveTimer = null;
   els.dim.addEventListener('input', () => {
     const v = Number(els.dim.value);
@@ -1276,8 +1440,6 @@
       setPut({ key: 'dim', value: v }).catch(() => {});
     }, 250);
   });
-
-  // Transparency slider
   let alphaSaveTimer = null;
   els.alpha.addEventListener('input', () => {
     const v = Number(els.alpha.value);
@@ -1338,13 +1500,11 @@
       try { navigator.mediaSession.playbackState = 'paused'; } catch (e) {}
     }
   });
-
   els.audio.addEventListener('loadedmetadata', () => {
     els.durTime.textContent = fmt(els.audio.duration);
     els.seek.value = 0;
     updatePositionState();
   });
-
   els.audio.addEventListener('timeupdate', () => {
     const d = els.audio.duration;
     if (isFinite(d) && d > 0) {
@@ -1354,7 +1514,6 @@
     els.curTime.textContent = fmt(els.audio.currentTime);
     updatePositionState();
   });
-
   els.audio.addEventListener('ended', () => {
     if (!tracks.length) return;
     if (loopMode === 'one') {
@@ -1365,7 +1524,6 @@
     }
     nextTrack(true);
   });
-
   els.audio.addEventListener('error', () => {
     if (current >= 0) els.nowSub.textContent = '⚠ Could not play this file';
   });
@@ -1404,8 +1562,13 @@
   /* ------------------------------------------------------------------ */
   /*  Init                                                               */
   /* ------------------------------------------------------------------ */
-
   setupPWA();
+
+  // Ask the browser to keep IndexedDB even under storage pressure.
+  // Helps on Android/desktop; on iOS it's a no-op but harmless.
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
+  }
 
   els.audio.volume = 1;
   renderLoop();
@@ -1418,7 +1581,6 @@
   applyDim(Number(els.dim.value));
 
   (async () => {
-    // Icon first — cheap and used immediately by PWA
     try {
       const ic = await setGet('icon');
       if (ic && ic.blob) await applyIcon(ic.blob);
