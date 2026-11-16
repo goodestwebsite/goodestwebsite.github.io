@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Audio Playlist Player</title>
+<style>
+  :root{
+    --bg:#0d0f14;
+    --panel:#161922;
+    --panel-2:#1d2230;
+    --line:#262c3a;
+    --line-hi:#3a4258;
+    --text:#e9ecf3;
+    --muted:#8a93a8;
+    --accent:#4f8cff;
+    --accent-2:#8b5cff;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html{ -webkit-text-size-adjust:100%; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    min-height:100dvh;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(900px 500px at 10% -10%, rgba(79,140,255,.18), transparent 60%),
+      radial-gradient(800px 500px at 110% 0%, rgba(139,92,255,.16), transparent 60%),
+      var(--bg);
+    display:flex;
+    justify-content:center;
+    padding:28px 16px calc(48px + env(safe-area-inset-bottom));
+  }
+
+  .app{ width:100%; max-width:800px; }
+
+  h1{ font-size:1.55rem; margin:0 0 6px; letter-spacing:-.01em; }
+  .sub{ margin:0 0 20px; color:var(--muted); font-size:.93rem; }
+
+  /* ---------- Drop zone ---------- */
+  .drop{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    padding:26px 18px;
+    border:2px dashed var(--line);
+    border-radius:16px;
+    background:rgba(255,255,255,.02);
+    cursor:pointer;
+    text-align:center;
+    transition:border-color .18s, background .18s, transform .18s;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  .drop:hover, .drop.over{
+    border-color:var(--accent);
+    background:rgba(79,140,255,.08);
+  }
+  .drop.over{ transform:scale(1.01); }
+  .drop-icon{ font-size:1.6rem; line-height:1; }
+  .hint{ color:var(--muted); font-size:.78rem; }
+  .hint-ios{ display:none; color:var(--muted); font-size:.75rem; margin-top:2px; }
+  .ios .hint-ios{ display:block; }
+
+  /* ---------- Playlist panel ---------- */
+  .panel{
+    margin-top:20px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+  }
+  .panel-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:13px 16px;
+    border-bottom:1px solid var(--line);
+  }
+  .panel-head h2{
+    margin:0;
+    font-size:1rem;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .count{
+    background:var(--panel-2);
+    color:var(--muted);
+    font-size:.75rem;
+    padding:2px 9px;
+    border-radius:999px;
+    font-variant-numeric:tabular-nums;
+  }
+  .ghost{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--muted);
+    padding:6px 11px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:.8rem;
+    font-family:inherit;
+    transition:.15s;
+  }
+  .ghost:hover{ color:var(--text); border-color:var(--line-hi); }
+
+  .playlist{
+    list-style:none;
+    margin:0;
+    padding:6px;
+    max-height:320px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .playlist::-webkit-scrollbar{ width:10px; }
+  .playlist::-webkit-scrollbar-thumb{
+    background:var(--line);
+    border-radius:999px;
+    border:3px solid var(--panel);
+  }
+
+  .track{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .track:hover{ background:var(--panel-2); }
+  .track.active{
+    background:linear-gradient(90deg, rgba(79,140,255,.20), rgba(139,92,255,.12));
+  }
+  .track .idx{
+    width:22px;
+    text-align:center;
+    color:var(--muted);
+    font-size:.8rem;
+    font-variant-numeric:tabular-nums;
+    flex:none;
+  }
+  .track.active .idx{ color:var(--accent); }
+  .track .name{
+    flex:1;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:.94rem;
+  }
+  .track.active .name{ font-weight:600; }
+  .track .remove{
+    background:transparent;
+    border:0;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:.95rem;
+    padding:6px 9px;
+    border-radius:8px;
+    opacity:.55;
+    flex:none;
+    transition:.15s;
+    font-family:inherit;
+    line-height:1;
+  }
+  .track .remove:hover{
+    color:#ff6b6b;
+    background:rgba(255,107,107,.14);
+    opacity:1;
+  }
+
+  .empty{
+    padding:26px 16px;
+    text-align:center;
+    color:var(--muted);
+    font-size:.9rem;
+  }
+
+  /* ---------- Player ---------- */
+  .player{
+    margin-top:16px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px;
+  }
+  .now-title{
+    font-weight:600;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .now-sub{
+    color:var(--muted);
+    font-size:.8rem;
+    margin-top:3px;
+  }
+
+  .progress-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:14px 0 10px;
+  }
+  .time{
+    font-size:.75rem;
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+    min-width:38px;
+    text-align:center;
+  }
+
+  input[type="range"]{
+    -webkit-appearance:none;
+    appearance:none;
+    height:4px;
+    border-radius:999px;
+    background:var(--line);
+    outline:none;
+    cursor:pointer;
+    touch-action:pan-y;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:16px; height:16px;
+    border-radius:50%;
+    border:0;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow:0 0 0 3px rgba(79,140,255,.16);
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:16px; height:16px;
+    border:0;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow:0 0 0 3px rgba(79,140,255,.16);
+  }
+  #seek{ flex:1; }
+
+  .controls{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .ctrl{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    border-radius:12px;
+    padding:10px 13px;
+    font-size:1rem;
+    font-family:inherit;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:.15s;
+    touch-action:manipulation;
+  }
+  .ctrl:hover{ background:#232a3a; border-color:var(--line-hi); }
+
+  .ctrl.play{
+    width:50px; height:50px;
+    border-radius:50%;
+    justify-content:center;
+    font-size:1.05rem;
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    border:0;
+    color:#fff;
+    box-shadow:0 6px 18px rgba(79,140,255,.35);
+  }
+  .ctrl.play:hover{ filter:brightness(1.08); }
+
+  .ctrl.loop .loop-label{
+    font-size:.75rem;
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .ctrl.loop.on{
+    border-color:var(--accent);
+    background:rgba(79,140,255,.12);
+    color:var(--accent);
+  }
+  .ctrl.loop.on .loop-label{ color:var(--accent); }
+
+  .vol{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:var(--muted);
+  }
+  .vol input{ width:90px; }
+
+  @media (max-width:520px){
+    .vol{ margin-left:0; width:100%; }
+    .vol input{ flex:1; width:auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>Audio Playlist</h1>
+    <p class="sub">Upload audio files, build a playlist, and loop it.</p>
+  </header>
+
+  <label id="drop" class="drop" for="fileInput">
+    <span class="drop-icon">⬆</span>
+    <span><strong>Click to upload</strong> or drag &amp; drop audio files here</span>
+    <span class="hint">mp3 · wav · ogg · m4a · flac · aac …</span>
+    <span class="hint-ios">On iPhone: tap above, then tap <em>Select</em> in Files to pick multiple tracks.</span>
+  </label>
+
+  <!--
+    IMPORTANT for iOS multi-select:
+    - `multiple` is present.
+    - `accept` lists explicit extensions (in addition to audio/*). On iOS Safari,
+      an accept value that contains file extensions routes the picker to the
+      "Files" browser, which supports multi-selection. With only `audio/*`,
+      iOS may open the single-item media picker instead.
+    - No `capture` attribute (capture forces the camera/mic and kills multi-select).
+  -->
+  <input
+    id="fileInput"
+    type="file"
+    accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.oga,.opus,.flac,.weba,.webm,.aiff,.aif,.wma"
+    multiple
+    hidden>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Playlist <span id="count" class="count">0</span></h2>
+      <button id="clearBtn" class="ghost" type="button">Clear all</button>
+    </div>
+    <ul id="playlist" class="playlist"></ul>
+  </section>
+
+  <section class="player">
+    <div class="now">
+      <div id="nowTitle" class="now-title">No track selected</div>
+      <div id="nowSub" class="now-sub">Add audio files to begin</div>
+    </div>
+
+    <div class="progress-row">
+      <span id="curTime" class="time">0:00</span>
+      <input id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Seek">
+      <span id="durTime" class="time">0:00</span>
+    </div>
+
+    <div class="controls">
+      <button id="prevBtn" class="ctrl" type="button" title="Previous" aria-label="Previous">⏮</button>
+      <button id="playBtn" class="ctrl play" type="button" title="Play / Pause" aria-label="Play">▶</button>
+      <button id="nextBtn" class="ctrl" type="button" title="Next" aria-label="Next">⏭</button>
+      <button id="loopBtn" class="ctrl loop" type="button" title="Repeat: Off" aria-label="Repeat mode">
+        <span class="loop-icon">🔁</span><span class="loop-label">Off</span>
+      </button>
+      <div class="vol">
+        <span class="vol-icon">🔊</span>
+        <input id="volume" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume">
+      </div>
+    </div>
+  </section>
+
+  <audio id="audio" preload="metadata" playsinline webkit-playsinline></audio>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const els = {
+    audio:     document.getElementById('audio'),
+    fileInput: document.getElementById('fileInput'),
+    drop:      document.getElementById('drop'),
+    playlist:  document.getElementById('playlist'),
+    count:     document.getElementById('count'),
+    clearBtn:  document.getElementById('clearBtn'),
+    nowTitle:  document.getElementById('nowTitle'),
+    nowSub:    document.getElementById('nowSub'),
+    curTime:   document.getElementById('curTime'),
+    durTime:   document.getElementById('durTime'),
+    seek:      document.getElementById('seek'),
+    playBtn:   document.getElementById('playBtn'),
+    prevBtn:   document.getElementById('prevBtn'),
+    nextBtn:   document.getElementById('nextBtn'),
+    loopBtn:   document.getElementById('loopBtn'),
+    volume:    document.getElementById('volume')
+  };
+
+  const AUDIO_EXT = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba|webm|aiff?|wma)$/i;
+  const LOOP_LABELS = { off: 'Off', all: 'All', one: 'One' };
+
+    /* ---- IndexedDB persistence ---- */
+  const DB_NAME = 'audio-playlist', STORE = 'tracks';
+  let dbPromise = null;
+  function db(){
+    if (!dbPromise) dbPromise = new Promise((res, rej) => {
+      const r = indexedDB.open(DB_NAME, 1);
+      r.onupgradeneeded = () => r.result.createObjectStore(STORE, { keyPath:'key' });
+      r.onsuccess = () => res(r.result);
+      r.onerror   = () => rej(r.error);
+    });
+    return dbPromise;
+  }
+  function dbPut(rec){ return db().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(rec);
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  })); }
+  function dbDelete(key){ return db().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(key);
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  })); }
+  function dbAll(){ return db().then(d => new Promise((res, rej) => {
+    const req = d.transaction(STORE, 'readonly').objectStore(STORE).getAll();
+    req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+  })); }
+  function dbClear(){ return db().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).clear();
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  })); }
+
+  // Detect iOS to show the extra hint (multi-select works in the Files app).
+  const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (IS_IOS) document.documentElement.classList.add('ios');
+
+  /** @type {{id:number, name:string, url:string}[]} */
+  let tracks = [];
+  let current = -1;
+  let loopMode = 'off';          // 'off' | 'all' | 'one'
+  let uid = 0;
+
+  /* ------------------------------------------------------------------ */
+  /*  Helpers                                                            */
+  /* ------------------------------------------------------------------ */
+
+  function fmt(seconds) {
+    if (!isFinite(seconds) || seconds < 0) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  function setPlayIcon(isPlaying) {
+    els.playBtn.textContent = isPlaying ? '⏸' : '▶';
+    els.playBtn.setAttribute('aria-label', isPlaying ? 'Pause' : 'Play');
+  }
+
+  function updateNowPlaying() {
+    if (current >= 0 && tracks[current]) {
+      els.nowTitle.textContent = tracks[current].name;
+      els.nowSub.textContent = `Track ${current + 1} of ${tracks.length}`;
+      document.title = tracks[current].name + ' — Audio Playlist';
+    } else {
+      els.nowTitle.textContent = 'No track selected';
+      els.nowSub.textContent = tracks.length
+        ? 'Pick a track from the playlist'
+        : 'Add audio files to begin';
+      document.title = 'Audio Playlist Player';
+    }
+    els.count.textContent = String(tracks.length);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Rendering                                                          */
+  /* ------------------------------------------------------------------ */
+
+  function render() {
+    const scrollTop = els.playlist.scrollTop;
+    els.playlist.innerHTML = '';
+
+    if (!tracks.length) {
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = 'No tracks yet — upload or drop audio files above.';
+      els.playlist.appendChild(li);
+    } else {
+      const frag = document.createDocumentFragment();
+      tracks.forEach((track, i) => {
+        const li = document.createElement('li');
+        li.className = 'track' + (i === current ? ' active' : '');
+        li.dataset.index = String(i);
+
+        const idx = document.createElement('span');
+        idx.className = 'idx';
+        idx.textContent = i === current ? '▶' : String(i + 1);
+
+        const name = document.createElement('span');
+        name.className = 'name';
+        name.textContent = track.name;
+        name.title = track.name;
+
+        const remove = document.createElement('button');
+        remove.className = 'remove';
+        remove.type = 'button';
+        remove.textContent = '✕';
+        remove.title = 'Remove track';
+        remove.setAttribute('aria-label', 'Remove track');
+
+        li.append(idx, name, remove);
+        frag.appendChild(li);
+      });
+      els.playlist.appendChild(frag);
+    }
+
+    els.playlist.scrollTop = scrollTop;
+    updateNowPlaying();
+  }
+
+  function renderLoop() {
+    els.loopBtn.classList.toggle('on', loopMode !== 'off');
+    els.loopBtn.querySelector('.loop-icon').textContent = loopMode === 'one' ? '🔂' : '🔁';
+    els.loopBtn.querySelector('.loop-label').textContent = LOOP_LABELS[loopMode];
+    els.loopBtn.title = 'Repeat: ' + LOOP_LABELS[loopMode];
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Playlist management                                                */
+  /* ------------------------------------------------------------------ */
+
+  /**
+   * Accepts a FileList (from an <input multiple> or a drop event).
+   * On iOS, a multi-selection from the Files app arrives here as a
+   * FileList containing every chosen file, so no extra work is needed.
+   */
+  function addFiles(fileList) {
+    if (!fileList || !fileList.length) return;
+
+    const files = Array.from(fileList).filter(
+      f => (f.type && f.type.startsWith('audio/')) || AUDIO_EXT.test(f.name)
+    );
+    if (!files.length) return;
+
+    const wasEmpty = tracks.length === 0;
+
+    // De-duplicate by name+size+lastModified so re-picking doesn't add clones.
+    const existing = new Set(tracks.map(t => t.key));
+    let added = 0;
+
+    files.forEach(file => {
+      const key = `${file.name}|${file.size}|${file.lastModified}`;
+      if (existing.has(key)) return;
+      existing.add(key);
+
+      const id = ++uid;
+      const name = file.name.replace(/\.[^.]+$/, '');
+      tracks.push({ id, key, name, url: URL.createObjectURL(file) });
+      added++;
+      dbPut({ key, name, blob: file, ts: Date.now() + id }).catch(() => {});
+      added++;
+    });
+
+    if (!added) return;
+
+    render();
+
+    // Load (but don't auto-play) the very first track added.
+    if (wasEmpty) playTrack(0, false);
+  }
+
+  function removeTrack(index) {
+    if (index < 0 || index >= tracks.length) return;
+
+      const wasCurrent = index === current;
+      dbDelete(tracks[index].key).catch(() => {});   // <-- add
+      URL.revokeObjectURL(tracks[index].url);
+      tracks.splice(index, 1);
+
+    if (!tracks.length) {
+      current = -1;
+      els.audio.pause();
+      els.audio.removeAttribute('src');
+      els.audio.load();
+      els.seek.value = 0;
+      els.curTime.textContent = '0:00';
+      els.durTime.textContent = '0:00';
+      setPlayIcon(false);
+      render();
+      return;
+    }
+
+    if (wasCurrent) {
+      els.audio.pause();
+      current = -1;
+      playTrack(Math.min(index, tracks.length - 1), false);
+    } else if (index < current) {
+      current--;
+    }
+
+    render();
+  }
+
+  function clearAll() {
+    if (!tracks.length) return;
+    dbClear().catch(() => {});
+    tracks.forEach(t => URL.revokeObjectURL(t.url));
+    tracks = [];
+    current = -1;
+    els.audio.pause();
+    els.audio.removeAttribute('src');
+    els.audio.load();
+    els.seek.value = 0;
+    els.curTime.textContent = '0:00';
+    els.durTime.textContent = '0:00';
+    setPlayIcon(false);
+    render();
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Playback                                                           */
+  /* ------------------------------------------------------------------ */
+
+  function playTrack(index, autoplay = true) {
+    if (index < 0 || index >= tracks.length) return;
+    current = index;
+    els.audio.src = tracks[index].url;
+
+    if (autoplay) {
+      const p = els.audio.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    } else {
+      els.audio.pause();
+      setPlayIcon(false);
+    }
+
+    els.seek.value = 0;
+    els.curTime.textContent = '0:00';
+    els.durTime.textContent = '0:00';
+    render();
+  }
+
+  function togglePlay() {
+    if (!tracks.length) { els.fileInput.click(); return; }
+    if (current === -1) { playTrack(0); return; }
+    if (els.audio.paused) {
+      const p = els.audio.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    } else {
+      els.audio.pause();
+    }
+  }
+
+  function nextTrack(auto = false) {
+    if (!tracks.length) return;
+
+    if (current === -1) { playTrack(0); return; }
+
+    if (current < tracks.length - 1) {
+      playTrack(current + 1);
+      return;
+    }
+
+    // We're on the last track.
+    if (loopMode === 'all' || !auto) {
+      // Manual "next" or repeat-all → wrap to the beginning and play.
+      playTrack(0);
+    } else {
++     // End of playlist with repeat OFF: go back to the first track and play.
++     playTrack(0);
+    }
+  }
+
+  function prevTrack() {
+    if (!tracks.length) return;
+
+    if (current !== -1 && els.audio.currentTime > 3) {
+      els.audio.currentTime = 0;
+      return;
+    }
+
+    if (current > 0) {
+      playTrack(current - 1);
+    } else if (current === 0) {
+      playTrack(tracks.length - 1);
+    } else {
+      playTrack(0);
+    }
+  }
+
+  function seekBy(delta) {
+    if (!tracks.length) return;
+    const d = els.audio.duration;
+    if (!isFinite(d) || d <= 0) return;
+    els.audio.currentTime = Math.min(d, Math.max(0, els.audio.currentTime + delta));
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Events                                                             */
+  /* ------------------------------------------------------------------ */
+
+  // Fired once with ALL selected files on iOS (Files app) and desktop.
+  els.fileInput.addEventListener('change', e => {
+    addFiles(e.target.files);
+    e.target.value = ''; // allow re-adding the same file(s)
+  });
+
+  // Drag & drop (desktop; iPadOS also supports it in some cases)
+  ['dragenter', 'dragover'].forEach(evt => {
+    els.drop.addEventListener(evt, e => {
+      e.preventDefault();
+      els.drop.classList.add('over');
+    });
+  });
+  ['dragleave', 'dragend', 'drop'].forEach(evt => {
+    els.drop.addEventListener(evt, e => {
+      e.preventDefault();
+      els.drop.classList.remove('over');
+    });
+  });
+  els.drop.addEventListener('drop', e => {
+    if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+  });
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => e.preventDefault());
+
+  // Playlist interactions (delegated)
+  els.playlist.addEventListener('click', e => {
+    const li = e.target.closest('.track');
+    if (!li) return;
+    const index = Number(li.dataset.index);
+
+    if (e.target.closest('.remove')) {
+      removeTrack(index);
+      return;
+    }
+
+    if (index === current) {
+      togglePlay();
+    } else {
+      playTrack(index);
+    }
+  });
+
+  els.clearBtn.addEventListener('click', clearAll);
+  els.playBtn.addEventListener('click', togglePlay);
+  els.nextBtn.addEventListener('click', () => nextTrack(false));
+  els.prevBtn.addEventListener('click', prevTrack);
+
+  els.loopBtn.addEventListener('click', () => {
+    loopMode = loopMode === 'off' ? 'all' : loopMode === 'all' ? 'one' : 'off';
+    renderLoop();
+  });
+
+  // Audio element events
+  els.audio.addEventListener('play',  () => setPlayIcon(true));
+  els.audio.addEventListener('pause', () => setPlayIcon(false));
+
+  els.audio.addEventListener('loadedmetadata', () => {
+    els.durTime.textContent = fmt(els.audio.duration);
+    els.seek.value = 0;
+  });
+
+  els.audio.addEventListener('timeupdate', () => {
+    const d = els.audio.duration;
+    if (isFinite(d) && d > 0) {
+      els.seek.value = Math.round((els.audio.currentTime / d) * 1000);
+      els.durTime.textContent = fmt(d);
+    }
+    els.curTime.textContent = fmt(els.audio.currentTime);
+  });
+
+  els.audio.addEventListener('ended', () => {
+    if (!tracks.length) return;
+
+    if (loopMode === 'one') {
+      els.audio.currentTime = 0;
+      const p = els.audio.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+      return;
+    }
+    nextTrack(true);
+  });
+
+  els.audio.addEventListener('error', () => {
+    if (current >= 0) {
+      els.nowSub.textContent = '⚠ Could not play this file';
+    }
+  });
+
+  // Seek bar
+  els.seek.addEventListener('input', () => {
+    const d = els.audio.duration;
+    if (!isFinite(d) || d <= 0) return;
+    els.audio.currentTime = (Number(els.seek.value) / 1000) * d;
+    els.curTime.textContent = fmt(els.audio.currentTime);
+  });
+
+  // Volume
+  els.volume.addEventListener('input', () => {
+    els.audio.volume = Number(els.volume.value);
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'button' || e.target.isContentEditable) return;
+
+    switch (e.code) {
+      case 'Space':      e.preventDefault(); togglePlay(); break;
+      case 'ArrowRight': e.preventDefault(); seekBy(5);    break;
+      case 'ArrowLeft':  e.preventDefault(); seekBy(-5);   break;
+      case 'KeyN':       nextTrack(false); break;
+      case 'KeyP':       prevTrack();      break;
+      case 'KeyL':
+        loopMode = loopMode === 'off' ? 'all' : loopMode === 'all' ? 'one' : 'off';
+        renderLoop();
+        break;
+    }
+  });
+
+  /* ------------------------------------------------------------------ */
+  /*  Init                                                               */
+  /* ------------------------------------------------------------------ */
+
+  els.audio.volume = 1;
+  renderLoop();
+  render();
+  setPlayIcon(false);
+    // Restore previously saved playlist from IndexedDB
+  (async () => {
+    try {
+      const recs = await dbAll();
+      if (!recs.length) return;
+      recs.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      recs.forEach(r => tracks.push({
+        id: ++uid,
+        key: r.key,
+        name: r.name,
+        url: URL.createObjectURL(r.blob)
+      }));
+      render();
+      playTrack(0, false);   // load first track, paused
+    } catch (e) { /* storage unavailable — ignore */ }
+  })();
+})();
+</script>
+</body>
+</html>
