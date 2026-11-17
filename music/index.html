@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -74,10 +75,6 @@
 
   .app{ width:100%; max-width:800px; position:relative; z-index:1; }
 
-  .topbar{ margin-bottom:18px; }
-  h1{ font-size:1.55rem; margin:0 0 4px; letter-spacing:-.01em; }
-  .sub{ margin:0; color:var(--muted); font-size:.93rem; }
-
   body.minimal .topbar{ display:none; }
   body.minimal .playlist-panel{ display:none; }
 
@@ -120,7 +117,7 @@
     font-weight:600;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
-  .now-sub{ color:var(--muted); font-size:.8rem; margin-top:3px; }
+  .now-sub{ color:var(--muted); font-size:.8rem; margin-top:3px; min-height:1em; }
 
   .progress-row{ display:flex; align-items:center; gap:10px; margin:14px 0 10px; }
   .time{
@@ -234,7 +231,7 @@
   }
 
   .track{
-    display:flex; align-items:center; gap:10px;
+    display:flex; align-items:center; gap:8px;
     padding:10px 12px; border-radius:10px;
     cursor:pointer; transition:background .15s;
   }
@@ -252,6 +249,16 @@
     font-size:.94rem;
   }
   .track.active .name{ font-weight:600; }
+
+  .track .note{
+    background:transparent; border:0; color:var(--muted);
+    cursor:pointer; font-size:.9rem; padding:6px 7px;
+    border-radius:8px; opacity:.5; flex:none;
+    transition:.15s; font-family:inherit; line-height:1;
+  }
+  .track .note:hover{ background:rgba(255,255,255,.06); opacity:1; color:var(--text); }
+  .track .note.has{ opacity:.95; color:var(--accent); }
+
   .track .remove{
     background:transparent; border:0; color:var(--muted);
     cursor:pointer; font-size:.95rem; padding:6px 9px;
@@ -320,16 +327,6 @@
     font-variant-numeric:tabular-nums; font-size:.8rem;
   }
 
-  .sidebar-hint{
-    color:var(--muted); font-size:.75rem; margin:4px 0 2px; line-height:1.35;
-  }
-  .sidebar-hint code{
-    background:rgba(255,255,255,.06);
-    padding:1px 4px;
-    border-radius:4px;
-    font-size:.72rem;
-  }
-
   .drop{
     display:flex; flex-direction:column; align-items:center; gap:6px;
     padding:22px 16px;
@@ -344,57 +341,7 @@
   }
   .drop.over{ transform:scale(1.01); }
   .drop-icon{ font-size:1.5rem; line-height:1; }
-  .hint{ color:var(--muted); font-size:.76rem; }
-  .hint-ios{ display:none; color:var(--muted); font-size:.74rem; margin-top:2px; }
-  .ios .hint-ios{ display:block; }
 
-  .install-hint{
-    position:fixed;
-    left:12px; right:12px;
-    bottom:calc(12px + env(safe-area-inset-bottom));
-    background:rgba(22,25,34,.97);
-    border:1px solid var(--line-hi);
-    border-radius:14px;
-    padding:12px 14px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    z-index:100;
-    box-shadow:0 8px 24px rgba(0,0,0,.55);
-    -webkit-backdrop-filter:blur(10px);
-    backdrop-filter:blur(10px);
-    animation:slideUp .3s ease;
-  }
-  .install-hint[hidden]{ display:none; }
-  .install-hint-text{ display:flex; flex-direction:column; gap:3px; font-size:.85rem; }
-  .install-hint-text strong{ font-size:.9rem; }
-  .install-hint-text small{ color:var(--muted); font-size:.78rem; }
-  .install-hint-text .share-icon{
-    display:inline-block;
-    padding:0 5px;
-    background:rgba(79,140,255,.18);
-    border-radius:4px;
-    color:var(--accent);
-    font-weight:600;
-    line-height:1.3;
-  }
-  .install-hint-close{
-    background:transparent; border:0;
-    color:var(--muted); cursor:pointer;
-    font-size:1rem; padding:8px;
-    border-radius:8px;
-    font-family:inherit;
-    flex:none;
-  }
-  .install-hint-close:hover{ color:var(--text); background:rgba(255,255,255,.06); }
-  @keyframes slideUp{
-    from{ transform:translateY(20px); opacity:0; }
-    to{ transform:translateY(0); opacity:1; }
-  }
-  body.standalone .install-hint{ display:none !important; }
-
-  /* tiny toast */
   #toast{
     position:fixed;
     left:50%; bottom:calc(24px + env(safe-area-inset-bottom));
@@ -414,6 +361,57 @@
     text-align:center;
   }
   #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* -------- Note modal -------- */
+  .note-modal{
+    position:fixed; inset:0; z-index:150;
+    background:rgba(0,0,0,.55);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .note-modal[hidden]{ display:none; }
+  .note-modal-box{
+    background:rgba(22,25,34,.98);
+    border:1px solid var(--line-hi);
+    border-radius:16px;
+    width:min(480px, 100%);
+    max-height:80vh;
+    display:flex; flex-direction:column;
+    box-shadow:0 16px 40px rgba(0,0,0,.6);
+    -webkit-backdrop-filter:blur(12px);
+    backdrop-filter:blur(12px);
+  }
+  .note-modal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px; border-bottom:1px solid var(--line);
+  }
+  .note-modal-head h3{
+    margin:0; font-size:1rem; font-weight:600;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    flex:1; padding-right:10px;
+  }
+  #noteText{
+    flex:1;
+    min-height:160px;
+    margin:12px 16px;
+    padding:12px;
+    background:rgba(0,0,0,.25);
+    border:1px solid var(--line);
+    border-radius:12px;
+    color:var(--text);
+    font-family:inherit;
+    font-size:.9rem;
+    resize:vertical;
+    outline:none;
+    -webkit-appearance:none;
+  }
+  #noteText:focus{ border-color:var(--accent); }
+  .note-modal-actions{
+    display:flex; gap:8px; justify-content:flex-end;
+    padding:0 16px 14px;
+  }
+  .note-modal-actions .ctrl{ padding:8px 16px; }
+  .note-modal-actions .ghost{ padding:8px 14px; }
 </style>
 </head>
 <body>
@@ -421,11 +419,6 @@
 <div id="bg"></div>
 
 <div class="app">
-  <header class="topbar">
-    <!-- <h1>Audio Playlist</h1>
-    <p class="sub">Tap ▶ to play · ⚙ for settings · ▴ to hide everything except the play bar</p> -->
-  </header>
-
   <section class="player">
     <div class="player-corner">
       <button id="settingsBtn" class="icon-btn" type="button" aria-label="Settings" title="Settings">⚙</button>
@@ -434,7 +427,7 @@
 
     <div class="now">
       <div id="nowTitle" class="now-title">No track selected</div>
-      <div id="nowSub" class="now-sub">Open settings to add audio files</div>
+      <div id="nowSub" class="now-sub"></div>
     </div>
 
     <div class="progress-row">
@@ -480,7 +473,6 @@
       <button id="iconBtn" class="ghost" type="button">🎨 Set icon</button>
       <button id="iconClearBtn" class="ghost" type="button" hidden>✕ Reset icon</button>
     </div>
-    <p class="sidebar-hint">Used when you “Add to Home Screen”. On iOS, remove and re-add the icon after changing.</p>
 
     <h3>Background</h3>
     <div class="row-between" style="flex-wrap:wrap">
@@ -503,14 +495,11 @@
       <button id="lockBtn" class="ghost" type="button">🔒 Set lock screen image</button>
       <button id="lockClearBtn" class="ghost" type="button" hidden>✕ Remove</button>
     </div>
-    <!-- <p class="sidebar-hint">Shown as artwork on the iPhone lock screen / Control Center while playing. Falls back to the background image.</p> -->
 
     <h3>Upload songs</h3>
     <label id="drop" class="drop" for="fileInput">
       <span class="drop-icon">⬆</span>
       <span><strong>Tap to upload</strong> or drop audio files here</span>
-      <span class="hint">mp3 · wav · ogg · m4a · flac · aac …</span>
-      <span class="hint-ios">On iPhone: tap above, then <em>Select</em> in Files to pick multiple.</span>
     </label>
     <input
       id="fileInput"
@@ -525,21 +514,25 @@
       <button id="importBtn" class="ghost" type="button">⬆ Import playlist</button>
     </div>
     <input id="importInput" type="file" accept=".json,application/json" hidden>
-    <p class="sidebar-hint">
-      <!-- iOS keeps Safari and the home-screen app in <strong>separate storage</strong>. Upload songs directly in the installed app and they stay there. Use Export in Safari → Import in the home-screen app to move a playlist across. Large playlists may take a while. -->
-    </p>
   </div>
 </aside>
 
-<div id="installHint" class="install-hint" hidden>
-  <div class="install-hint-text">
-    <strong>Install for offline use</strong>
-    <small>Tap <span class="share-icon">⬆</span> Share → <em>Add to Home Screen</em></small>
-  </div>
-  <button id="dismissHint" class="install-hint-close" type="button" aria-label="Dismiss">✕</button>
-</div>
-
 <div id="toast" role="status" aria-live="polite"></div>
+
+<!-- Note modal -->
+<div id="noteModal" class="note-modal" hidden>
+  <div class="note-modal-box">
+    <div class="note-modal-head">
+      <h3 id="noteTitle">Notes</h3>
+      <button id="noteClose" class="icon-btn" type="button" aria-label="Close">✕</button>
+    </div>
+    <textarea id="noteText" placeholder=""></textarea>
+    <div class="note-modal-actions">
+      <button id="noteDelete" class="ghost" type="button">Delete</button>
+      <button id="noteSave" class="ctrl" type="button">Save</button>
+    </div>
+  </div>
+</div>
 
 <input id="bgInput" type="file" accept="image/*" hidden>
 <input id="lockInput" type="file" accept="image/*" hidden>
@@ -585,16 +578,21 @@
     alphaVal:     document.getElementById('alphaVal'),
     dim:          document.getElementById('dim'),
     dimVal:       document.getElementById('dimVal'),
-    installHint:  document.getElementById('installHint'),
-    dismissHint:  document.getElementById('dismissHint'),
     exportBtn:    document.getElementById('exportBtn'),
     importBtn:    document.getElementById('importBtn'),
     importInput:  document.getElementById('importInput'),
-    toast:        document.getElementById('toast')
+    toast:        document.getElementById('toast'),
+    noteModal:    document.getElementById('noteModal'),
+    noteTitle:    document.getElementById('noteTitle'),
+    noteText:     document.getElementById('noteText'),
+    noteSave:     document.getElementById('noteSave'),
+    noteDelete:   document.getElementById('noteDelete'),
+    noteClose:    document.getElementById('noteClose')
   };
 
   const AUDIO_EXT = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba|webm|aiff?|wma)$/i;
   const LOOP_LABELS = { off: 'Off', all: 'All', one: 'One' };
+  const GAP_MS = 1000;
 
   /* ---- IndexedDB ---- */
   const DB_NAME = 'audio-playlist', STORE = 'tracks', SETTINGS = 'settings';
@@ -645,14 +643,14 @@
     tx.objectStore(SETTINGS).delete(key);
     tx.oncomplete = res; tx.onerror = () => rej(tx.error);
   })); }
+  function setAll(){ return db().then(d => new Promise((res, rej) => {
+    const req = d.transaction(SETTINGS, 'readonly').objectStore(SETTINGS).getAll();
+    req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+  })); }
 
   const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (IS_IOS) document.documentElement.classList.add('ios');
-
-  const IS_SAFARI_IOS = IS_IOS &&
-    /Safari/.test(navigator.userAgent) &&
-    !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(navigator.userAgent);
 
   const IS_STANDALONE =
     window.navigator.standalone === true ||
@@ -670,6 +668,10 @@
   let fallbackArtwork = [];
   let customIconDataUrl = null;
   let manifestUrl = null;
+
+  let notesMap = new Map();       // trackKey -> note text
+  let editingIndex = -1;
+  let gapTimer = null;
 
   /* ------------------------------------------------------------------ */
   /*  Toast                                                              */
@@ -727,7 +729,7 @@
       const manifest = {
         name: 'Audio Playlist',
         short_name: 'Playlist',
-        description: 'Local audio playlist player — works offline.',
+        description: 'Local audio playlist player.',
         start_url: '.',
         scope: './',
         display: 'standalone',
@@ -749,20 +751,6 @@
     } catch (e) {}
   }
   function rebuildIconAssets() { installIconLinks(); installManifest(); }
-
-  function setupPWA() {
-    rebuildIconAssets();
-    try {
-      const dismissed = localStorage.getItem('installHintDismissed') === '1';
-      if (IS_SAFARI_IOS && !IS_STANDALONE && !dismissed) {
-        els.installHint.hidden = false;
-      }
-    } catch (e) {}
-    els.dismissHint.addEventListener('click', () => {
-      els.installHint.hidden = true;
-      try { localStorage.setItem('installHintDismissed', '1'); } catch (e) {}
-    });
-  }
 
   function makeFallbackArtwork() {
     try {
@@ -806,9 +794,7 @@
       document.title = tracks[current].name + ' — Audio Playlist';
     } else {
       els.nowTitle.textContent = 'No track selected';
-      els.nowSub.textContent = tracks.length
-        ? 'Pick a track from the playlist'
-        : 'Open settings to add audio files';
+      els.nowSub.textContent = '';
       document.title = 'Audio Playlist Player';
     }
     els.count.textContent = String(tracks.length);
@@ -1041,6 +1027,48 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /*  Notes                                                              */
+  /* ------------------------------------------------------------------ */
+  function openNoteModal(index) {
+    if (index < 0 || index >= tracks.length) return;
+    editingIndex = index;
+    const t = tracks[index];
+    els.noteTitle.textContent = t.name;
+    els.noteText.value = notesMap.get(t.key) || '';
+    els.noteModal.hidden = false;
+    document.body.classList.add('no-scroll');
+    setTimeout(() => { try { els.noteText.focus(); } catch (e) {} }, 30);
+  }
+  function closeNoteModal() {
+    els.noteModal.hidden = true;
+    if (!els.sidebar.classList.contains('open')) document.body.classList.remove('no-scroll');
+    editingIndex = -1;
+  }
+  async function saveNote() {
+    if (editingIndex < 0) { closeNoteModal(); return; }
+    const t = tracks[editingIndex];
+    const text = els.noteText.value;
+    if (text.trim()) {
+      notesMap.set(t.key, text);
+      try { await setPut({ key: 'note:' + t.key, text }); } catch (e) {}
+    } else {
+      notesMap.delete(t.key);
+      try { await setDelete('note:' + t.key); } catch (e) {}
+    }
+    closeNoteModal();
+    render();
+  }
+  async function deleteNote() {
+    if (editingIndex < 0) { closeNoteModal(); return; }
+    const t = tracks[editingIndex];
+    notesMap.delete(t.key);
+    try { await setDelete('note:' + t.key); } catch (e) {}
+    els.noteText.value = '';
+    closeNoteModal();
+    render();
+  }
+
+  /* ------------------------------------------------------------------ */
   /*  Rendering                                                          */
   /* ------------------------------------------------------------------ */
   function render() {
@@ -1049,7 +1077,7 @@
     if (!tracks.length) {
       const li = document.createElement('li');
       li.className = 'empty';
-      li.textContent = 'No tracks yet';
+      li.textContent = 'No tracks';
       els.playlist.appendChild(li);
     } else {
       const frag = document.createDocumentFragment();
@@ -1057,20 +1085,31 @@
         const li = document.createElement('li');
         li.className = 'track' + (i === current ? ' active' : '');
         li.dataset.index = String(i);
+
         const idx = document.createElement('span');
         idx.className = 'idx';
         idx.textContent = i === current ? '▶' : String(i + 1);
+
         const name = document.createElement('span');
         name.className = 'name';
         name.textContent = track.name;
         name.title = track.name;
+
+        const noteBtn = document.createElement('button');
+        noteBtn.className = 'note' + (notesMap.get(track.key) ? ' has' : '');
+        noteBtn.type = 'button';
+        noteBtn.textContent = '📝';
+        noteBtn.title = notesMap.get(track.key) ? 'View/edit note' : 'Add note';
+        noteBtn.setAttribute('aria-label', 'Note');
+
         const remove = document.createElement('button');
         remove.className = 'remove';
         remove.type = 'button';
         remove.textContent = '✕';
         remove.title = 'Remove track';
         remove.setAttribute('aria-label', 'Remove track');
-        li.append(idx, name, remove);
+
+        li.append(idx, name, noteBtn, remove);
         frag.appendChild(li);
       });
       els.playlist.appendChild(frag);
@@ -1116,11 +1155,15 @@
   function removeTrack(index) {
     if (index < 0 || index >= tracks.length) return;
     const wasCurrent = index === current;
-    dbDelete(tracks[index].key).catch(() => {});
+    const removedKey = tracks[index].key;
+    notesMap.delete(removedKey);
+    setDelete('note:' + removedKey).catch(() => {});
+    dbDelete(removedKey).catch(() => {});
     URL.revokeObjectURL(tracks[index].url);
     tracks.splice(index, 1);
     if (!tracks.length) {
       current = -1;
+      clearGap();
       els.audio.pause();
       els.audio.removeAttribute('src');
       els.audio.load();
@@ -1134,6 +1177,7 @@
     }
     if (wasCurrent) {
       els.audio.pause();
+      clearGap();
       current = -1;
       playTrack(Math.min(index, tracks.length - 1), false);
     } else if (index < current) {
@@ -1146,9 +1190,14 @@
   function clearAll() {
     if (!tracks.length) return;
     dbClear().catch(() => {});
+    for (const key of notesMap.keys()) {
+      setDelete('note:' + key).catch(() => {});
+    }
+    notesMap.clear();
     tracks.forEach(t => URL.revokeObjectURL(t.url));
     tracks = [];
     current = -1;
+    clearGap();
     els.audio.pause();
     els.audio.removeAttribute('src');
     els.audio.load();
@@ -1164,8 +1213,13 @@
   /* ------------------------------------------------------------------ */
   /*  Playback                                                           */
   /* ------------------------------------------------------------------ */
+  function clearGap(){
+    if (gapTimer) { clearTimeout(gapTimer); gapTimer = null; }
+  }
+
   function playTrack(index, autoplay = true) {
     if (index < 0 || index >= tracks.length) return;
+    clearGap();
     current = index;
     els.audio.src = tracks[index].url;
     if (autoplay) {
@@ -1182,9 +1236,23 @@
     updateMediaSession();
     updatePositionState();
   }
+
   function togglePlay() {
     if (!tracks.length) { openSidebar(); return; }
     if (current === -1) { playTrack(0); return; }
+
+    if (gapTimer) {
+      clearGap();
+      if (loopMode === 'one') {
+        els.audio.currentTime = 0;
+        const p = els.audio.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      } else {
+        nextTrack(true);
+      }
+      return;
+    }
+
     if (els.audio.paused) {
       const p = els.audio.play();
       if (p && typeof p.catch === 'function') p.catch(() => {});
@@ -1192,14 +1260,24 @@
       els.audio.pause();
     }
   }
+
   function nextTrack(auto = false) {
     if (!tracks.length) return;
+    clearGap();
     if (current === -1) { playTrack(0); return; }
     if (current < tracks.length - 1) { playTrack(current + 1); return; }
+    // at last track
+    if (auto && loopMode === 'off') {
+      // loop off + auto → stop after finishing playlist
+      setPlayIcon(false);
+      return;
+    }
     playTrack(0);
   }
+
   function prevTrack() {
     if (!tracks.length) return;
+    clearGap();
     if (current !== -1 && els.audio.currentTime > 3) {
       els.audio.currentTime = 0;
       return;
@@ -1208,6 +1286,7 @@
     else if (current === 0) playTrack(tracks.length - 1);
     else playTrack(0);
   }
+
   function seekBy(delta) {
     if (!tracks.length) return;
     const d = els.audio.duration;
@@ -1225,13 +1304,13 @@
     try {
       const out = {
         app: 'audio-playlist',
-        version: 1,
+        version: 2,
         exported: new Date().toISOString(),
         settings: {},
+        notes: [],
         tracks: []
       };
 
-      // Pull each track's blob from IndexedDB and base64 it
       for (const t of tracks) {
         try {
           const rec = await new Promise((res, rej) => {
@@ -1252,7 +1331,10 @@
         } catch (e) {}
       }
 
-      // Settings
+      notesMap.forEach((text, key) => {
+        if (text) out.notes.push({ key, text });
+      });
+
       for (const k of ['alpha', 'dim', 'background', 'lockscreen', 'icon']) {
         try {
           const s = await setGet(k);
@@ -1293,7 +1375,6 @@
       const data = JSON.parse(text);
       if (!data || !Array.isArray(data.tracks)) throw new Error('Not a playlist backup');
 
-      // Tracks
       let added = 0, skipped = 0;
       const existing = new Set(tracks.map(t => t.key));
       for (const tr of data.tracks) {
@@ -1311,7 +1392,14 @@
         } catch (e) { skipped++; }
       }
 
-      // Settings
+      if (Array.isArray(data.notes)) {
+        for (const n of data.notes) {
+          if (!n || !n.key) continue;
+          notesMap.set(n.key, n.text || '');
+          try { await setPut({ key: 'note:' + n.key, text: n.text || '' }); } catch (e) {}
+        }
+      }
+
       const s = data.settings || {};
       if (s.alpha && typeof s.alpha.value === 'number') {
         applyAlpha(s.alpha.value);
@@ -1365,9 +1453,6 @@
   els.settingsBtn.addEventListener('click', openSidebar);
   els.closeSidebar.addEventListener('click', closeSidebar);
   els.scrim.addEventListener('click', closeSidebar);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && els.sidebar.classList.contains('open')) closeSidebar();
-  });
 
   els.hideBtn.addEventListener('click', () => {
     setMinimal(!document.body.classList.contains('minimal'));
@@ -1474,6 +1559,7 @@
     if (!li) return;
     const index = Number(li.dataset.index);
     if (e.target.closest('.remove')) { removeTrack(index); return; }
+    if (e.target.closest('.note')) { openNoteModal(index); return; }
     if (index === current) togglePlay();
     else playTrack(index);
   });
@@ -1488,6 +1574,15 @@
     renderLoop();
   });
 
+  // Note modal events
+  els.noteClose.addEventListener('click', closeNoteModal);
+  els.noteSave.addEventListener('click', saveNote);
+  els.noteDelete.addEventListener('click', deleteNote);
+  els.noteModal.addEventListener('click', (e) => {
+    if (e.target === els.noteModal) closeNoteModal();
+  });
+
+  // Audio events
   els.audio.addEventListener('play', () => {
     setPlayIcon(true);
     if ('mediaSession' in navigator) {
@@ -1514,16 +1609,24 @@
     els.curTime.textContent = fmt(els.audio.currentTime);
     updatePositionState();
   });
+
+  // 1-second pause between songs
   els.audio.addEventListener('ended', () => {
     if (!tracks.length) return;
-    if (loopMode === 'one') {
-      els.audio.currentTime = 0;
-      const p = els.audio.play();
-      if (p && typeof p.catch === 'function') p.catch(() => {});
-      return;
-    }
-    nextTrack(true);
+    clearGap();
+    setPlayIcon(false);
+    gapTimer = setTimeout(() => {
+      gapTimer = null;
+      if (loopMode === 'one') {
+        els.audio.currentTime = 0;
+        const p = els.audio.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+        return;
+      }
+      nextTrack(true); // respects loop-off stop at last track
+    }, GAP_MS);
   });
+
   els.audio.addEventListener('error', () => {
     if (current >= 0) els.nowSub.textContent = '⚠ Could not play this file';
   });
@@ -1541,6 +1644,14 @@
   });
 
   document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (!els.noteModal.hidden) { closeNoteModal(); return; }
+      if (els.sidebar.classList.contains('open')) closeSidebar();
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (!els.noteModal.hidden) return;
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'button' || e.target.isContentEditable) return;
     switch (e.code) {
@@ -1562,10 +1673,8 @@
   /* ------------------------------------------------------------------ */
   /*  Init                                                               */
   /* ------------------------------------------------------------------ */
-  setupPWA();
+  rebuildIconAssets();
 
-  // Ask the browser to keep IndexedDB even under storage pressure.
-  // Helps on Android/desktop; on iOS it's a no-op but harmless.
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persist().catch(() => {});
   }
@@ -1584,6 +1693,16 @@
     try {
       const ic = await setGet('icon');
       if (ic && ic.blob) await applyIcon(ic.blob);
+    } catch (e) {}
+
+    // Load notes first so track rendering can show indicators
+    try {
+      const all = await setAll();
+      all.forEach(r => {
+        if (r && r.key && r.key.indexOf('note:') === 0) {
+          notesMap.set(r.key.slice(5), r.text || '');
+        }
+      });
     } catch (e) {}
 
     try {
