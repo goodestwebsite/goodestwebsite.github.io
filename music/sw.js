@@ -18,6 +18,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     const keys = await caches.keys();
+await self.clients.claim();
     await Promise.all(
       keys.filter((k) => k !== CACHE && k.startsWith('audio-playlist-'))
           .map((k) => caches.delete(k))
@@ -33,7 +34,12 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   // Don't touch blob:/data:/cross-origin requests (audio, artwork, etc.).
   if (url.origin !== self.location.origin) return;
-
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js', { scope: './' })
+        .catch(() => {});
+    });
+  }
   // Page loads: serve cached shell instantly, refresh in background.
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
