@@ -697,7 +697,35 @@
   const AUDIO_EXT = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba|webm|aiff?|wma)$/i;
   const LOOP_LABELS = { off: 'Off', all: 'All', one: 'One' };
   const GAP_MS = 1000;
+/* ------------------------------------------------------------------ */
+  /*  Offline / Service Worker                                           */
+  /* ------------------------------------------------------------------ */
+  function initServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    // SW needs http(s); skip file:// and other protocols.
+    if (location.protocol !== 'https:' &&
+        location.hostname !== 'localhost' &&
+        location.hostname !== '127.0.0.1') return;
 
+    navigator.serviceWorker.register('./sw.js', { scope: './' }).then((reg) => {
+      // First install: tell the user it now works offline.
+      if (!navigator.serviceWorker.controller) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          toast('Offline ready', 1800);
+        }, { once: true });
+      }
+      // A newer sw.js is waiting → inform, don't auto-reload (would cut playback).
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            toast('Update ready — reopen app to apply', 3500);
+          }
+        });
+      });
+    }).catch(() => { /* no sw.js → page still works while online */ });
+  }
   /* ---- IndexedDB ---- */
   const DB_NAME = 'audio-playlist', STORE = 'tracks', SETTINGS = 'settings';
   let dbPromise = null;
