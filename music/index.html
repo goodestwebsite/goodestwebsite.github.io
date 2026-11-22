@@ -2,19 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta id="viewportMeta" name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
-<!-- Apply saved "desktop mode" viewport before render -->
-<script>
-  (function(){
-    try {
-      if (localStorage.getItem('desktop-mode') === '1') {
-        var m = document.getElementById('viewportMeta');
-        if (m) m.setAttribute('content', 'width=1024');
-      }
-    } catch (e) {}
-  })();
-</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -478,10 +466,6 @@
     min-width:40px; text-align:right; color:var(--muted);
     font-variant-numeric:tabular-nums; font-size:.8rem;
   }
-  .hint{
-    color:var(--muted); font-size:.72rem; line-height:1.4;
-    margin-top:-4px;
-  }
 
   .drop{
     display:flex; flex-direction:column; align-items:center; gap:6px;
@@ -695,12 +679,6 @@
   </div>
 
   <div class="sidebar-body">
-    <h3>Display</h3>
-    <div class="row-between" style="flex-wrap:wrap">
-      <button id="desktopBtn" class="ghost" type="button">🖥 Request desktop version</button>
-    </div>
-    <div class="hint">Reloads the page and renders at a fixed 1024&nbsp;px desktop width. This affects only this app's own layout; it cannot change the browser's User-Agent.</div>
-
     <h3>Home screen icon</h3>
     <div class="row-between" style="flex-wrap:wrap">
       <button id="iconBtn" class="ghost" type="button">🎨 Set icon</button>
@@ -747,6 +725,11 @@
       <button id="importBtn" class="ghost" type="button">⬆ Import playlist</button>
     </div>
     <input id="importInput" type="file" accept=".json,application/json" hidden>
+
+    <h3>Browser</h3>
+    <div class="row-between" style="flex-wrap:wrap">
+      <button id="desktopBtn" class="ghost" type="button">🖥 Request desktop site</button>
+    </div>
   </div>
 </aside>
 
@@ -817,7 +800,6 @@
     iconBtn:      document.getElementById('iconBtn'),
     iconClearBtn: document.getElementById('iconClearBtn'),
     iconInput:    document.getElementById('iconInput'),
-    desktopBtn:   document.getElementById('desktopBtn'),
     settingsBtn:  document.getElementById('settingsBtn'),
     hideBtn:      document.getElementById('hideBtn'),
     closeSidebar: document.getElementById('closeSidebar'),
@@ -830,6 +812,7 @@
     exportBtn:    document.getElementById('exportBtn'),
     importBtn:    document.getElementById('importBtn'),
     importInput:  document.getElementById('importInput'),
+    desktopBtn:   document.getElementById('desktopBtn'),
     toast:        document.getElementById('toast'),
     noteSidebar:     document.getElementById('noteSidebar'),
     noteScrim:       document.getElementById('noteScrim'),
@@ -852,6 +835,25 @@
   const AUDIO_EXT = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba|webm|aiff?|wma)$/i;
   const LOOP_LABELS = { off: 'Off', all: 'All', one: 'One' };
   const GAP_MS = 1000;
+
+  /* ---- Desktop-site viewport toggle ---- */
+  const DESKTOP_KEY = 'desktop-mode';
+  const MOBILE_VIEWPORT = 'width=device-width, initial-scale=1, viewport-fit=cover';
+  const DESKTOP_VIEWPORT = 'width=1280';
+  function isDesktopMode(){
+    try { return localStorage.getItem(DESKTOP_KEY) === '1'; } catch (e) { return false; }
+  }
+  function applyViewport(desktop){
+    const vp = document.querySelector('meta[name="viewport"]');
+    if (!vp) return;
+    vp.setAttribute('content', desktop ? DESKTOP_VIEWPORT : MOBILE_VIEWPORT);
+  }
+  function updateDesktopBtn(){
+    if (!els.desktopBtn) return;
+    els.desktopBtn.textContent = isDesktopMode()
+      ? '📱 Request mobile site'
+      : '🖥 Request desktop site';
+  }
 
   /* ---- IndexedDB ---- */
   const DB_NAME = 'audio-playlist', STORE = 'tracks', SETTINGS = 'settings';
@@ -1137,25 +1139,6 @@
     const label = on ? 'Show playlist' : 'Hide playlist';
     els.hideBtn.setAttribute('aria-label', label);
     els.hideBtn.title = label;
-  }
-
-  /* ------------------------------------------------------------------ */
-  /*  Desktop / mobile display toggle                                    */
-  /* ------------------------------------------------------------------ */
-  function updateDesktopBtn() {
-    let on = false;
-    try { on = localStorage.getItem('desktop-mode') === '1'; } catch (e) {}
-    els.desktopBtn.textContent = on ? '📱 Switch to mobile version' : '🖥 Request desktop version';
-  }
-
-  function toggleDesktopMode() {
-    let on = false;
-    try { on = localStorage.getItem('desktop-mode') === '1'; } catch (e) {}
-    try {
-      if (on) localStorage.removeItem('desktop-mode');
-      else localStorage.setItem('desktop-mode', '1');
-    } catch (e) {}
-    location.reload();
   }
 
   /* ------------------------------------------------------------------ */
@@ -2165,8 +2148,18 @@
     setMinimal(!document.body.classList.contains('minimal'));
   });
 
-  // Desktop / mobile display toggle
-  els.desktopBtn.addEventListener('click', toggleDesktopMode);
+  // Desktop-site toggle
+  els.desktopBtn.addEventListener('click', () => {
+    const next = !isDesktopMode();
+    try {
+      if (next) localStorage.setItem(DESKTOP_KEY, '1');
+      else localStorage.removeItem(DESKTOP_KEY);
+    } catch (e) {}
+    applyViewport(next);
+    updateDesktopBtn();
+    toast(next ? 'Requesting desktop site…' : 'Requesting mobile site…', 1500);
+    setTimeout(() => { try { location.reload(); } catch (e) {} }, 150);
+  });
 
   // Add URL button + modal
   els.addUrlBtn.addEventListener('click', () => {
@@ -2411,6 +2404,10 @@
   /* ------------------------------------------------------------------ */
   /*  Init                                                               */
   /* ------------------------------------------------------------------ */
+  // Apply saved desktop/mobile viewport preference before anything else.
+  applyViewport(isDesktopMode());
+  updateDesktopBtn();
+
   rebuildIconAssets();
 
   if (navigator.storage && navigator.storage.persist) {
@@ -2424,7 +2421,6 @@
   setMinimal(false);
   initMediaSession();
   updateMediaSession();
-  updateDesktopBtn();
   applyAlpha(Number(els.alpha.value));
   applyDim(Number(els.dim.value));
 
