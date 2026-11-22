@@ -825,9 +825,7 @@
     urlAdd:       document.getElementById('urlAdd'),
     ytHost:       document.getElementById('ytHost')
   };
-if ('audioSession' in navigator) {
-  try { navigator.audioSession.type = 'playback'; } catch (e) {}
-}
+
   const AUDIO_EXT = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba|webm|aiff?|wma)$/i;
   const LOOP_LABELS = { off: 'Off', all: 'All', one: 'One' };
   const GAP_MS = 1000;
@@ -889,6 +887,12 @@ if ('audioSession' in navigator) {
   const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (IS_IOS) document.documentElement.classList.add('ios');
+
+  // Tell iOS this is a media playback session, so audio keeps playing
+  // when the app is backgrounded or the screen is locked.
+  if ('audioSession' in navigator) {
+    try { navigator.audioSession.type = 'playback'; } catch (e) {}
+  }
 
   const IS_STANDALONE =
     window.navigator.standalone === true ||
@@ -1242,7 +1246,14 @@ if ('audioSession' in navigator) {
     safe('play', () => {
       if (current === -1) { playTrack(0); return; }
       if (currentIsYT) { if (ytPlayer) ytPlayer.playVideo(); }
-      else { const p = els.audio.play(); if (p && p.catch) p.catch(() => {}); }
+      else {
+        const t = tracks[current];
+        if (t && els.audio.dataset.key !== t.key) {
+          els.audio.src = t.url;
+          els.audio.dataset.key = t.key;
+        }
+        const p = els.audio.play(); if (p && p.catch) p.catch(() => {});
+      }
     });
     safe('pause', () => {
       if (currentIsYT) { if (ytPlayer) ytPlayer.pauseVideo(); }
@@ -1403,18 +1414,7 @@ if ('audioSession' in navigator) {
   /* ------------------------------------------------------------------ */
   /*  YouTube IFrame integration                                         */
   /* ------------------------------------------------------------------ */
-async function fetchYouTubeTitle(videoId) {
-  try {
-    const res = await fetch(
-      `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.title || null;
-  } catch (e) {
-    return null;
-  }
-}
+
   function parseYouTubeId(url) {
     if (!url) return null;
     const patterns = [
@@ -1430,6 +1430,22 @@ async function fetchYouTubeTitle(videoId) {
     }
     if (/^[A-Za-z0-9_-]{11}$/.test(url.trim())) return url.trim();
     return null;
+  }
+
+  // Fetch the real video title via YouTube's oEmbed endpoint.
+  async function fetchYouTubeTitle(videoId) {
+    try {
+      const res = await fetch(
+        'https://www.youtube.com/oembed?url=' +
+        encodeURIComponent('https://www.youtube.com/watch?v=' + videoId) +
+        '&format=json'
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data && data.title ? data.title : null;
+    } catch (e) {
+      return null;
+    }
   }
 
   function ensureYTPlayer() {
@@ -1668,12 +1684,14 @@ async function fetchYouTubeTitle(videoId) {
     const key = 'yt:' + videoId;
     if (tracks.some(t => t.key === key)) { toast('Already in playlist'); return; }
 
+    toast('Fetching YouTube title…', 1600);
     const fetchedTitle = await fetchYouTubeTitle(videoId);
     const name = fetchedTitle || ('YouTube · ' + videoId);
 
     const id = ++uid;
     tracks.push({ id, key, name, type: 'youtube', videoId });
     saveOrder();
+    // Persist the YouTube track itself (not just its order key)
     setPut({ key: 'ytrack:' + key, track: { name, key, type: 'youtube', videoId } })
       .catch(() => {});
     render();
@@ -1698,13 +1716,14 @@ async function fetchYouTubeTitle(videoId) {
     saveOrder();
     if (!tracks.length) {
       current = -1;
+      currentIsYT = false;
       clearGap();
       stopYTPoll();
       els.audio.pause();
       els.audio.removeAttribute('src');
+      delete els.audio.dataset.key;
       els.audio.load();
       if (ytPlayer) { try { ytPlayer.stopVideo(); } catch (e) {} }
-      currentIsYT = false;
       els.seek.value = 0;
       els.curTime.textContent = '0:00';
       els.durTime.textContent = '0:00';
@@ -1744,6 +1763,7 @@ async function fetchYouTubeTitle(videoId) {
     stopYTPoll();
     els.audio.pause();
     els.audio.removeAttribute('src');
+    delete els.audio.dataset.key;
     els.audio.load();
     if (ytPlayer) { try { ytPlayer.stopVideo(); } catch (e) {} }
     els.seek.value = 0;
@@ -1762,48 +1782,106 @@ async function fetchYouTubeTitle(videoId) {
     if (gapTimer) { clearTimeout(gapTimer); gapTimer = null; }
   }
 
-  // In playTrack
-async function playTrack(index, autoplay = true) {
-  // … stop previous playback …
-  current = index;
-  const t = tracks[index];
-  currentIsYT = t.type === 'youtube';
+  async function playTrack(index, autoplay = true) {
+    if (index < 0 || index >= tracks.length) return;
+    clearGap();
+    stopYTPoll();
 
-  if (currentIsYT) {
-    // … YouTube logic unchanged …
-  } else {
-    // Only load the audio resource if we're actually starting playback
-    if (autoplay) {
-      els.audio.src = t.url;
-      const p = els.audio.play();
-      if (p && p.catch) p.catch(() => {});
+    // Stop whatever was playing before switching
+    if (currentIsYT) {
+      if (ytPlayer) { try { ytPlayer.stopVideo(); } catch (e) {} }
     } else {
-      // Do NOT set els.audio.src here; just update the UI
       els.audio.pause();
-      setPlayIcon(false);
     }
-  }
-  // … UI updates …
-}
 
-// In togglePlay (when starting playback)
-function togglePlay() {
-  // … existing checks …
-  if (currentIsYT) { /* … */ }
-  else {
-    if (els.audio.paused) {
-      // If the audio element has no src yet, assign it now
-      if (!els.audio.src) {
-        const t = tracks[current];
-        els.audio.src = t.url;
+    current = index;
+    const t = tracks[index];
+    currentIsYT = t.type === 'youtube';
+
+    if (currentIsYT) {
+      const ok = await loadYTVideo(t.videoId);
+      if (!ok) {
+        toast('Could not load YouTube track');
+        setPlayIcon(false);
+        return;
       }
-      const p = els.audio.play();
-      if (p && p.catch) p.catch(() => {});
+
+      // Fallback: if we only have a placeholder name, try the player metadata.
+      if (t.name.indexOf('YouTube · ') === 0) {
+        try {
+          const vd = ytPlayer.getVideoData();
+          if (vd && vd.title) {
+            t.name = vd.title;
+            setPut({ key: 'ytrack:' + t.key, track: { name: t.name, key: t.key, type: 'youtube', videoId: t.videoId } })
+              .catch(() => {});
+          }
+        } catch (e) {}
+      }
+
+      if (autoplay) {
+        try { ytPlayer.playVideo(); } catch (e) {}
+      } else {
+        toast('Tap the YouTube bar once to start audio', 3000);
+      }
+      startYTPoll();
     } else {
-      els.audio.pause();
+      if (autoplay) {
+        // Only fetch the file when the user actually plays it.
+        els.audio.src = t.url;
+        els.audio.dataset.key = t.key;
+        const p = els.audio.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      } else {
+        // Do NOT set src — nothing is downloaded until playback starts.
+        els.audio.pause();
+        setPlayIcon(false);
+      }
+    }
+
+    els.seek.value = 0;
+    els.curTime.textContent = '0:00';
+    els.durTime.textContent = '0:00';
+    render();
+    updateMediaSession();
+    updatePositionState();
+  }
+
+  function togglePlay() {
+    if (!tracks.length) { openSidebar(); return; }
+    if (current === -1) { playTrack(0); return; }
+
+    if (gapTimer) {
+      clearGap();
+      if (loopMode === 'one') {
+        if (currentIsYT && ytPlayer) { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); }
+        else { els.audio.currentTime = 0; const p = els.audio.play(); if (p && p.catch) p.catch(() => {}); }
+      } else {
+        nextTrack(true);
+      }
+      return;
+    }
+
+    if (currentIsYT) {
+      if (!ytPlayer) return;
+      const state = ytPlayer.getPlayerState();
+      if (state === 1) { ytPlayer.pauseVideo(); }
+      else { ytPlayer.playVideo(); }
+    } else {
+      if (els.audio.paused) {
+        const t = tracks[current];
+        if (!t) return;
+        // Lazily load the file the first time the user plays it.
+        if (els.audio.dataset.key !== t.key) {
+          els.audio.src = t.url;
+          els.audio.dataset.key = t.key;
+        }
+        const p = els.audio.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      } else {
+        els.audio.pause();
+      }
     }
   }
-}
 
   function nextTrack(auto = false) {
     if (!tracks.length) return;
@@ -2354,7 +2432,7 @@ function togglePlay() {
 
     if (tracks.length) {
       render();
-      playTrack(0, false);
+      playTrack(0, false); // UI only — no audio is fetched until the user presses play
     }
 
     try {
