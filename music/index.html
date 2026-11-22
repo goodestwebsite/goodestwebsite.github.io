@@ -725,6 +725,11 @@
       <button id="importBtn" class="ghost" type="button">⬆ Import playlist</button>
     </div>
     <input id="importInput" type="file" accept=".json,application/json" hidden>
+
+    <h3>Browser</h3>
+    <div class="row-between" style="flex-wrap:wrap">
+      <button id="desktopBtn" class="ghost" type="button">🖥 Request desktop site</button>
+    </div>
   </div>
 </aside>
 
@@ -807,6 +812,7 @@
     exportBtn:    document.getElementById('exportBtn'),
     importBtn:    document.getElementById('importBtn'),
     importInput:  document.getElementById('importInput'),
+    desktopBtn:   document.getElementById('desktopBtn'),
     toast:        document.getElementById('toast'),
     noteSidebar:     document.getElementById('noteSidebar'),
     noteScrim:       document.getElementById('noteScrim'),
@@ -829,6 +835,25 @@
   const AUDIO_EXT = /\.(mp3|wav|ogg|oga|m4a|aac|flac|opus|weba|webm|aiff?|wma)$/i;
   const LOOP_LABELS = { off: 'Off', all: 'All', one: 'One' };
   const GAP_MS = 1000;
+
+  /* ---- Desktop-site viewport toggle ---- */
+  const DESKTOP_KEY = 'desktop-mode';
+  const MOBILE_VIEWPORT = 'width=device-width, initial-scale=1, viewport-fit=cover';
+  const DESKTOP_VIEWPORT = 'width=1280';
+  function isDesktopMode(){
+    try { return localStorage.getItem(DESKTOP_KEY) === '1'; } catch (e) { return false; }
+  }
+  function applyViewport(desktop){
+    const vp = document.querySelector('meta[name="viewport"]');
+    if (!vp) return;
+    vp.setAttribute('content', desktop ? DESKTOP_VIEWPORT : MOBILE_VIEWPORT);
+  }
+  function updateDesktopBtn(){
+    if (!els.desktopBtn) return;
+    els.desktopBtn.textContent = isDesktopMode()
+      ? '📱 Request mobile site'
+      : '🖥 Request desktop site';
+  }
 
   /* ---- IndexedDB ---- */
   const DB_NAME = 'audio-playlist', STORE = 'tracks', SETTINGS = 'settings';
@@ -2123,6 +2148,19 @@
     setMinimal(!document.body.classList.contains('minimal'));
   });
 
+  // Desktop-site toggle
+  els.desktopBtn.addEventListener('click', () => {
+    const next = !isDesktopMode();
+    try {
+      if (next) localStorage.setItem(DESKTOP_KEY, '1');
+      else localStorage.removeItem(DESKTOP_KEY);
+    } catch (e) {}
+    applyViewport(next);
+    updateDesktopBtn();
+    toast(next ? 'Requesting desktop site…' : 'Requesting mobile site…', 1500);
+    setTimeout(() => { try { location.reload(); } catch (e) {} }, 150);
+  });
+
   // Add URL button + modal
   els.addUrlBtn.addEventListener('click', () => {
     els.urlInput.value = '';
@@ -2366,6 +2404,10 @@
   /* ------------------------------------------------------------------ */
   /*  Init                                                               */
   /* ------------------------------------------------------------------ */
+  // Apply saved desktop/mobile viewport preference before anything else.
+  applyViewport(isDesktopMode());
+  updateDesktopBtn();
+
   rebuildIconAssets();
 
   if (navigator.storage && navigator.storage.persist) {
